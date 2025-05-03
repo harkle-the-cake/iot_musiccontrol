@@ -4,7 +4,7 @@ After=network.target
 
 [Service]
 ExecStart=/usr/bin/python3 /home/pi/iot_musiccontrol/cover-display/app.py
-WorkingDirectory=/home/pi/iot_musiccontrol/cover_display
+WorkingDirectory=/home/pi/iot_musiccontrol/cover-display
 Environment=PYTHONUNBUFFERED=1
 Restart=always
 User=pi
