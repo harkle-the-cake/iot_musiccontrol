@@ -62,7 +62,35 @@ sudo systemctl restart "$SERVICE_NAME"
 
 echo "✅ Setup complete."
 
-# 7. Reboot if SPI was newly enabled
+# 7. Configure journald log rotation
+echo "🗂 Configuring journald log rotation..."
+
+JOURNAL_CONF="/etc/systemd/journald.conf"
+NEEDS_RESTART=false
+
+sudo grep -q "^SystemMaxUse=" $JOURNAL_CONF || {
+    echo "SystemMaxUse=50M" | sudo tee -a $JOURNAL_CONF
+    NEEDS_RESTART=true
+}
+
+sudo grep -q "^SystemMaxFileSize=" $JOURNAL_CONF || {
+    echo "SystemMaxFileSize=10M" | sudo tee -a $JOURNAL_CONF
+    NEEDS_RESTART=true
+}
+
+sudo grep -q "^MaxRetentionSec=" $JOURNAL_CONF || {
+    echo "MaxRetentionSec=7day" | sudo tee -a $JOURNAL_CONF
+    NEEDS_RESTART=true
+}
+
+if [ "$NEEDS_RESTART" = true ]; then
+    echo "🔄 Restarting journald to apply log rotation settings..."
+    sudo systemctl restart systemd-journald
+else
+    echo "✅ Journald already configured."
+fi
+
+# 8. Reboot
 read -p "🔁 Reboot now to activate? [y/N]: " REBOOT
 if [[ "$REBOOT" =~ ^[Yy]$ ]]; then
   echo "🔄 Rebooting now..."
