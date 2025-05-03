@@ -63,12 +63,10 @@ sudo systemctl restart "$SERVICE_NAME"
 echo "✅ Setup complete."
 
 # 7. Reboot if SPI was newly enabled
-if [ "$SPI_ENABLED_NOW" = true ]; then
-  read -p "🔁 SPI was just enabled. Reboot now to activate it? [y/N]: " REBOOT
-  if [[ "$REBOOT" =~ ^[Yy]$ ]]; then
-    echo "🔄 Rebooting now..."
-    sudo reboot
-  else
-    echo "ℹ️ Please reboot manually before using the display."
-  fi
+read -p "🔁 Reboot now to activate? [y/N]: " REBOOT
+if [[ "$REBOOT" =~ ^[Yy]$ ]]; then
+  echo "🔄 Rebooting now..."
+  sudo reboot
+else
+  echo "ℹ️ Please reboot manually before using the display."
 fi
