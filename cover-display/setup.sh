@@ -8,11 +8,6 @@ ENV_FILE=".env"
 SERVICE_PATH="/etc/systemd/system/$SERVICE_NAME"
 APP_DIR="$(pwd)"
 CONFIG_FILE="/boot/config.txt"
-SOURCE_FOLDER="~/iot_musiccontrol/cover-display"
-DEST_FOLDER="~/cover-display"
-
-mv $SOURCE_FOLDER ~
-cd $DEST_FOLDER
 
 echo "🔧 Starting full setup of cover-display in: $APP_DIR"
 
