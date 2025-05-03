@@ -47,7 +47,7 @@ fi
 
 # 5. Run app once for Spotify login
 echo "🔑 Launching app for initial Spotify login..."
-python3 "$SCRIPT_NAME"
+python3 "$SCRIPT_NAME" --once
 
 # 6. Install and start systemd service
 if [ ! -f "$SERVICE_PATH" ]; then
