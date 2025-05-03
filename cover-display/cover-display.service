@@ -1,0 +1,13 @@
+[Unit]
+Description=Cover Display
+After=network.target
+
+[Service]
+ExecStart=/usr/bin/python3 /home/pi/cover-display/app.py
+WorkingDirectory=/home/pi/cover_display
+Environment=PYTHONUNBUFFERED=1
+Restart=always
+User=pi
+
+[Install]
+WantedBy=multi-user.target
