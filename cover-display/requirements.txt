@@ -2,3 +2,5 @@ spotipy
 python-dotenv
 pillow
 requests
+spidev
+numpy
