@@ -15,7 +15,7 @@ echo "🔧 Starting full setup of cover-display in: $APP_DIR"
 echo "📦 Installing required system packages..."
 sudo apt update
 sudo apt install -y python3 python3-pip python3-pil python3-dev python3-setuptools \
-                    python3-spidev libjpeg-dev libopenblas-base git
+                    python3-spidev libjpeg-dev libopenblas-base0
 
 # 2. Prompt for Spotify credentials
 if [ ! -f "$ENV_FILE" ]; then

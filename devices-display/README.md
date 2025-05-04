@@ -31,9 +31,10 @@ Built for minimal systems with beautiful output and easy integration.
 This project is designed to run on a clean Raspberry Pi OS installation.
 
 To install all dependencies, configure the display, and set up the systemd service, simply run:
-
-git clone https://github.com/yourname/cover-display.git
-cd cover-display
+sudo apt-get update && sudo apt-get upgrade -y
+sudo apt-get install git
+git clone https://github.com/harkle-the-cake/iot_musiccontrol.git
+cd iot_musiccontrol/devices-display/
 chmod +x setup.sh
 ./setup.sh
 
@@ -59,6 +60,8 @@ After reboot, the display will automatically show the album cover of the current
 ``` manual installation
 use the bash and clone this repository:
 
+sudo apt-get update && sudo apt-get upgrade -y
+sudo apt-get git
 git clone https://github.com/harkle-the-cake/iot_musiccontrol.git
 cd cover-display
 
