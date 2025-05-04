@@ -32,10 +32,6 @@ client_secret = os.getenv("SPOTIFY_CLIENT_SECRET")
 if not client_id or not client_secret:
     raise ValueError("❌ Missing SPOTIFY_CLIENT_ID or SPOTIFY_CLIENT_SECRET in environment!")
 
-if not images_dir.exists():
-    logging.warning(f"📁 images directory not found: {images_dir}")
-    return default_path
-
 if not (Path(__file__).resolve().parent / "images/default.jpg").exists():
     raise FileNotFoundError("⚠️ Default image not found: images/default.jpg")
 
