@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Spotify Device Image Upload</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            background: #f7f7f7;
+            margin: 2rem;
+        }
+        h1 {
+            text-align: center;
+        }
+        .device {
+            background: #fff;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 1rem;
+            margin: 1rem auto;
+            width: 320px;
+            box-shadow: 0 0 5px rgba(0,0,0,0.1);
+        }
+        .device img {
+            width: 240px;
+            height: 240px;
+            object-fit: cover;
+            display: block;
+            margin: 0 auto 1rem;
+        }
+        .device form {
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <h1>Spotify Devices</h1>
+
+    {% for device in devices %}
+    <div class="device">
+        <h2>{{ device.name }}</h2>
+        {% if device.image_url %}
+            <img src="{{ device.image_url }}" alt="{{ device.name }}">
+        {% else %}
+            <p><em>No image assigned.</em></p>
+        {% endif %}
+        <form action="{{ url_for('upload', device_id=device.id) }}" method="POST" enctype="multipart/form-data">
+            <input type="file" name="file" accept="image/*" required>
+            <br><br>
+            <button type="submit">Upload Image</button>
+        </form>
+    </div>
+    {% endfor %}
+</body>
+</html>

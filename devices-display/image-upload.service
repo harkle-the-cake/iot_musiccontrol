@@ -1,0 +1,13 @@
+[Unit]
+Description=Image Upload for Devices
+After=network.target
+
+[Service]
+ExecStart=/usr/bin/python3 /home/pi/iot_musiccontrol/devices-display/web.py
+WorkingDirectory=/home/pi/iot_musiccontrol/devices-display
+Environment=PYTHONUNBUFFERED=1
+Restart=always
+User=pi
+
+[Install]
+WantedBy=multi-user.target
