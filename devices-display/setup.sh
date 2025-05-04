@@ -16,7 +16,6 @@ echo "🔧 Starting full setup of cover-display in: $APP_DIR"
 # 1. Install system dependencies
 echo "📦 Installing required system packages..."
 sudo apt update
-sudo apt upgrade
 sudo apt install -y python3 python3-pip python3-pil python3-dev python3-setuptools \
                     python3-spidev libjpeg-dev libopenblas0
 
@@ -34,6 +33,15 @@ EOF
 else
   echo "✅ Found existing .env – skipping credential input."
 fi
+
+# Create venv if not exists
+if [ ! -d ".venv" ]; then
+  echo "📦 Creating virtual environment..."
+  python3 -m venv .venv
+fi
+
+# Activate venv
+source .venv/bin/activate
 
 # 3. Install Python packages
 echo "🐍 Installing Python dependencies..."

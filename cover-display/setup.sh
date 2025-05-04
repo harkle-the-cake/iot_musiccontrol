@@ -32,6 +32,15 @@ else
   echo "✅ Found existing .env – skipping credential input."
 fi
 
+# Create venv if not exists
+if [ ! -d ".venv" ]; then
+  echo "📦 Creating virtual environment..."
+  python3 -m venv .venv
+fi
+
+# Activate venv
+source .venv/bin/activate
+
 # 3. Install Python packages
 echo "🐍 Installing Python dependencies..."
 pip3 install -r requirements.txt

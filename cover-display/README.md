@@ -34,7 +34,7 @@ To install all dependencies, configure the display, and set up the systemd servi
 sudo apt-get update && sudo apt-get upgrade -y
 sudo apt-get git
 git clone https://github.com/harkle-the-cake/iot_musiccontrol.git
-cd cover-display
+cd iot_musiccontrol/cover-display
 chmod +x setup.sh
 ./setup.sh
 
