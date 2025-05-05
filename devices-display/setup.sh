@@ -20,6 +20,8 @@ sudo apt update
 sudo apt install -y python3 python3-pip libjpeg-dev libopenjp2-7 libopenblas0 \
   python3-flask python3-requests python3-numpy python3-pillow python3-dotenv python3-spidev python3-spotipy \
  
+# Spotipy (nur über pip verfügbar)
+pip3 install --no-cache-dir spotipy python-dotenv
 
 # 2. Prompt for Spotify credentials
 if [ ! -f "$ENV_FILE" ]; then
