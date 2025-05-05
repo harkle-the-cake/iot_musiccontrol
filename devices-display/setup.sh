@@ -22,17 +22,8 @@ sudo apt install -y python3 python3-pip libjpeg-dev libopenjp2-7 libopenblas0 \
  
 sudo apt autoremove
 
-# Create venv if not exists
-if [ ! -d ".venv" ]; then
-  echo "📦 Creating virtual environment..."
-  python3 -m venv .venv
-fi
-
-# Activate venv
-source .venv/bin/activate
- 
 # Spotipy (nur über pip verfügbar)
-pip3 install --no-cache-dir spotipy python-dotenv
+pip3 install --no-cache-dir spotipy python-dotenv --break-system-packages
 
 # 2. Prompt for Spotify credentials
 if [ ! -f "$ENV_FILE" ]; then
