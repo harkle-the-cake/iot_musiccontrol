@@ -22,6 +22,8 @@ args = parser.parse_args()
 # Load environment variables from .env file
 load_dotenv(dotenv_path=Path(__file__).resolve().parent / ".env")
 
+cache_path = Path(__file__).resolve().parent / ".spotify_cache"
+
 # Import display library (adjust if needed)
 from libs import LCD_1inch3
 
@@ -65,7 +67,8 @@ sp = spotipy.Spotify(auth_manager=SpotifyOAuth(
     client_id=client_id,
     client_secret=client_secret,
     redirect_uri="http://127.0.0.1:8888/callback",
-    scope="user-read-playback-state",
+    scope="user-read-playback-state",    
+    cache_path = Path(__file__).resolve().parent / ".spotify_cache",
     open_browser=False
 ))
 

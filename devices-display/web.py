@@ -12,6 +12,8 @@ from dotenv import load_dotenv
 # Load environment variables from .env
 load_dotenv(dotenv_path=Path(__file__).resolve().parent / ".env")
 
+cache_path = Path(__file__).resolve().parent / ".spotify_cache"
+
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = Path(__file__).resolve().parent / "images"
 app.config['MAX_CONTENT_LENGTH'] = 5 * 1024 * 1024  # max 5MB
@@ -22,6 +24,7 @@ sp = Spotify(auth_manager=SpotifyOAuth(
     client_secret=os.getenv("SPOTIFY_CLIENT_SECRET"),
     redirect_uri="http://127.0.0.1:8888/callback",
     scope="user-read-playback-state user-read-private user-read-email",
+    cache_path = Path(__file__).resolve().parent / ".spotify_cache",
     open_browser=False
 ))
 
