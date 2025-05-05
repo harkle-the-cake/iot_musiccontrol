@@ -18,7 +18,7 @@ echo "📦 Installing required system packages..."
 sudo apt update
 					
 sudo apt install -y python3 python3-pip libjpeg-dev libopenjp2-7 libopenblas0 \
-  python3-flask python3-requests python3-numpy python3-pillow python3-dotenv python3-spidev \
+  python3-flask python3-requests python3-numpy python3-pillow python3-dotenv python3-spidev python3-spotipy \
  
 
 # 2. Prompt for Spotify credentials
