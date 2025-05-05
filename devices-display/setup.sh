@@ -20,6 +20,17 @@ sudo apt update
 sudo apt install -y python3 python3-pip libjpeg-dev libopenjp2-7 libopenblas0 \
   python3-flask python3-requests python3-numpy python3-pillow python3-dotenv python3-spidev \
  
+sudo apt autoremove
+
+# Create venv if not exists
+if [ ! -d ".venv" ]; then
+  echo "📦 Creating virtual environment..."
+  python3 -m venv .venv
+fi
+
+# Activate venv
+source .venv/bin/activate
+ 
 # Spotipy (nur über pip verfügbar)
 pip3 install --no-cache-dir spotipy python-dotenv
 
