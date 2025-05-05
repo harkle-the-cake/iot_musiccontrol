@@ -15,7 +15,8 @@ load_dotenv(dotenv_path=Path(__file__).resolve().parent / ".env")
 cache_path = Path(__file__).resolve().parent / ".spotify_cache"
 
 app = Flask(__name__)
-app.config['UPLOAD_FOLDER'] = Path(__file__).resolve().parent / "images"
+app.config['UPLOAD_FOLDER'] = Path(__file__).resolve().parent / "static" / "images"
+app.config['UPLOAD_FOLDER'].mkdir(parents=True, exist_ok=True)
 app.config['MAX_CONTENT_LENGTH'] = 5 * 1024 * 1024  # max 5MB
 
 # Spotify Auth
@@ -36,9 +37,11 @@ def index():
 
     for d in devices:
         device_id = d.get("id")
+        device_name = d.get("name", "Unnamed")
         image_path = image_dir / f"{device_id}.jpg"
-        d["has_image"] = image_path.exists()
-        d["image_url"] = url_for('static', filename=f"{device_id}.jpg") if d["has_image"] else None
+        d["image_url"] = url_for('static', filename=f"images/{device_id}.jpg") if image_path.exists() \
+                         else url_for('static', filename="images/default.jpg")
+        d["name"] = device_name
 
     return render_template("index.html", devices=devices)
 

@@ -80,7 +80,7 @@ def mapToImage(device):
     device_name = device.get('name', 'unknown').lower().replace(" ", "_")
     
     # Load mapping file (can be JSON or just file lookup)
-    images_dir = Path(__file__).resolve().parent / "images"
+    images_dir = Path(__file__).resolve().parent / "static" / "images"
     specific_path = images_dir / f"{device_id}.jpg"
     fallback_path = images_dir / f"{device_name}.jpg"
     default_path = images_dir / "default.jpg"
