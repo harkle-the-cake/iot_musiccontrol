@@ -38,7 +38,7 @@ def index():
         device_id = d.get("id")
         image_path = image_dir / f"{device_id}.jpg"
         d["has_image"] = image_path.exists()
-        d["image_url"] = url_for('static', filename=f"{device_id}.jpg") if d["has_image"] else None
+        d["image_url"] = url_for(app.config['UPLOAD_FOLDER'], filename=f"{device_id}.jpg") if d["has_image"] else None
 
     return render_template("index.html", devices=devices)
 
