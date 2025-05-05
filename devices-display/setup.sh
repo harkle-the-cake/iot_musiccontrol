@@ -13,6 +13,23 @@ CONFIG_FILE="/boot/config.txt"
 
 echo "🔧 Starting full setup of cover-display in: $APP_DIR"
 
+# 0. Ensure SPI is enabled (before any display logic)
+CONFIG_FILE="/boot/config.txt"
+if ! grep -q "^dtparam=spi=on" "$CONFIG_FILE"; then
+  echo "🔧 SPI interface not enabled – enabling now..."
+  echo "dtparam=spi=on" | sudo tee -a "$CONFIG_FILE" > /dev/null
+  echo "⚠️ SPI was just enabled – a reboot is required before continuing."
+  read -p "🔁 Reboot now? [Y/n]: " REBOOT
+  if [[ "$REBOOT" =~ ^[Nn]$ ]]; then
+    echo "ℹ️ Please reboot manually and re-run the setup after reboot."
+    exit 0
+  else
+    sudo reboot
+  fi
+else
+  echo "✅ SPI already enabled."
+fi
+
 # 1. Install system dependencies
 echo "📦 Installing required system packages..."
 sudo apt update
@@ -38,15 +55,6 @@ SPOTIFY_CLIENT_SECRET=$CLIENT_SECRET
 EOF
 else
   echo "✅ Found existing .env – skipping credential input."
-fi
-
-# 3. Enable SPI if not already
-if ! grep -q "^dtparam=spi=on" "$CONFIG_FILE"; then
-  echo "🔌 Enabling SPI interface in $CONFIG_FILE..."
-  echo "dtparam=spi=on" | sudo tee -a "$CONFIG_FILE" > /dev/null
-  SPI_ENABLED_NOW=true
-else
-  echo "✅ SPI already enabled."
 fi
 
 # 4. Run app once for Spotify login
