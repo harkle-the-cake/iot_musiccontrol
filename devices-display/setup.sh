@@ -16,8 +16,10 @@ echo "🔧 Starting full setup of cover-display in: $APP_DIR"
 # 1. Install system dependencies
 echo "📦 Installing required system packages..."
 sudo apt update
-sudo apt install -y python3 python3-pip python3-pil python3-dev python3-setuptools \
-                    python3-spidev libjpeg-dev libopenblas0
+					
+sudo apt install -y python3 python3-pip libjpeg-dev libopenjp2-7 libopenblas0 \
+  python3-flask python3-requests python3-numpy python3-pillow python3-dotenv python3-spidev \
+ 
 
 # 2. Prompt for Spotify credentials
 if [ ! -f "$ENV_FILE" ]; then
@@ -34,20 +36,7 @@ else
   echo "✅ Found existing .env – skipping credential input."
 fi
 
-# Create venv if not exists
-if [ ! -d ".venv" ]; then
-  echo "📦 Creating virtual environment..."
-  python3 -m venv .venv
-fi
-
-# Activate venv
-source .venv/bin/activate
-
-# 3. Install Python packages
-echo "🐍 Installing Python dependencies..."
-pip3 install -r requirements.txt
-
-# 4. Enable SPI if not already
+# 3. Enable SPI if not already
 if ! grep -q "^dtparam=spi=on" "$CONFIG_FILE"; then
   echo "🔌 Enabling SPI interface in $CONFIG_FILE..."
   echo "dtparam=spi=on" | sudo tee -a "$CONFIG_FILE" > /dev/null
@@ -56,11 +45,11 @@ else
   echo "✅ SPI already enabled."
 fi
 
-# 5. Run app once for Spotify login
+# 4. Run app once for Spotify login
 echo "🔑 Launching app for initial Spotify login..."
 python3 "$SCRIPT_NAME" --once
 
-# 6. Install and start systemd service
+# 5. Install and start systemd service
 if [ ! -f "$SERVICE_PATH" ]; then
   echo "🛠️ Installing systemd service..."
   sudo cp "$SERVICE_NAME" "$SERVICE_PATH"
@@ -71,7 +60,7 @@ sudo systemctl daemon-reload
 sudo systemctl enable "$SERVICE_NAME"
 sudo systemctl restart "$SERVICE_NAME"
 
-# 6.1 Install and start systemd service
+# 6 Install and start systemd service
 if [ ! -f "$SERVICE_PATH_UPLOAD" ]; then
   echo "🛠️ Installing systemd service for image upload..."
   sudo cp "$SERVICE_NAME_UPLOAD" "$SERVICE_PATH_UPLOAD"
