@@ -1,125 +1,84 @@
+
 <!DOCTYPE html>
-<html lang="en">
+<html lang="de">
 <head>
   <meta charset="UTF-8">
-  <title>Spotify Configuration</title>
+  <title>Spotify Konfiguration</title>
   <style>
     body {
       font-family: sans-serif;
       background: #f0f0f0;
       padding: 2rem;
     }
-    h1, h2 {
-      color: #333;
-    }
-    form {
+    .section {
       background: #fff;
-      padding: 1rem;
+      border: 1px solid #ccc;
       border-radius: 8px;
-      max-width: 500px;
+      padding: 1rem 2rem;
       margin-bottom: 2rem;
+      max-width: 600px;
       box-shadow: 0 0 5px rgba(0,0,0,0.1);
     }
     label {
       display: block;
-      margin: 0.5rem 0 0.2rem;
+      margin-top: 1em;
     }
     input, select {
       width: 100%;
-      padding: 0.4rem;
-      border: 1px solid #ccc;
-      border-radius: 4px;
-      box-sizing: border-box;
+      padding: 0.5em;
+      margin-top: 0.3em;
     }
     button {
-      margin-top: 1rem;
-      padding: 0.6rem 1rem;
-      background: #007BFF;
-      color: white;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
+      margin-top: 1.5em;
+      padding: 0.5em 1em;
     }
-    .device {
-      background: #fff;
-      border: 1px solid #ccc;
-      border-radius: 8px;
-      padding: 1rem;
-      margin: 1rem auto;
-      width: 260px;
-      text-align: center;
-      box-shadow: 0 0 5px rgba(0,0,0,0.1);
+    .status {
+      margin-top: 1em;
+      font-size: 1.2em;
     }
-    .device img {
-      width: 240px;
-      height: 240px;
-      object-fit: cover;
-      cursor: pointer;
-      border-radius: 4px;
+    .ok {
+      color: green;
     }
-    input[type="file"] {
-      display: none;
-    }
-    .auth-warning {
-      color: #a00;
-      background: #fff0f0;
-      border: 1px solid #f00;
-      padding: 1rem;
-      border-radius: 8px;
-      margin-bottom: 2rem;
-    }
-    .auth-warning a {
-      color: #d00;
-      font-weight: bold;
+    .fail {
+      color: red;
     }
   </style>
 </head>
 <body>
-  <h1>🎛 Spotify Hardware Config</h1>
+  <div class="section">
+    <h2>🛠 Spotify-Konfiguration</h2>
+    <form method="POST">
+      <label for="client_id">Client ID:</label>
+      <input type="text" id="client_id" name="client_id" value="{{ config.client_id }}" required>
 
-  {% if not token_valid %}
-    <div class="auth-warning">
-      <p>🔒 Spotify authentication is required. Please authenticate via the following link:</p>
-      <p><a href="{{ auth_url }}" target="_blank">→ Authenticate with Spotify</a></p>
+      <label for="client_secret">Client Secret:</label>
+      <input type="password" id="client_secret" name="client_secret" value="{{ config.client_secret }}" required>
+
+      <label for="redirect_uri">Redirect URI:</label>
+      <input type="text" id="redirect_uri" name="redirect_uri" value="{{ config.redirect_uri }}" required>
+
+      <label for="orientation">Bildschirm-Rotation (in Grad):</label>
+      <input type="number" id="orientation" name="orientation" value="{{ config.orientation or 0 }}" step="90" min="0" max="270">
+
+      <label for="mode">Modus:</label>
+      <select id="mode" name="mode">
+        <option value="album" {% if config.mode == 'album' %}selected{% endif %}>Album</option>
+        <option value="playlist" {% if config.mode == 'playlist' %}selected{% endif %}>Playlist</option>
+        <option value="artist" {% if config.mode == 'artist' %}selected{% endif %}>Artist</option>
+        <option value="device" {% if config.mode == 'device' %}selected{% endif %}>Geräte</option>
+        <option value="delete" {% if config.mode == 'delete' %}selected{% endif %}>Löschen</option>
+      </select>
+
+      <button type="submit">💾 Speichern</button>
+    </form>
+
+    <div class="status">
+      {% if spotify_ok %}
+        <p class="ok">🟢 Spotify-Zugriff funktioniert! <br>Letzter Titel: <strong>{{ last_track }}</strong></p>
+      {% else %}
+        <p class="fail">🔴 Spotify-Zugriff fehlgeschlagen!</p>
+      {% endif %}
     </div>
-  {% endif %}
-
-  <form method="POST">
-    <label for="client_id">Spotify Client ID</label>
-    <input type="text" name="client_id" id="client_id" value="{{ config.client_id }}" required>
-
-    <label for="client_secret">Spotify Client Secret</label>
-    <input type="text" name="client_secret" id="client_secret" value="{{ config.client_secret }}" required>
-
-    <label for="orientation">Screen Orientation (degrees)</label>
-    <input type="number" name="orientation" id="orientation" value="{{ config.orientation or 0 }}" required>
-
-    <label for="mode">Mode</label>
-    <select name="mode" id="mode" onchange="this.form.submit()">
-      <option value="album" {% if config.mode == 'album' %}selected{% endif %}>Album</option>
-      <option value="playlist" {% if config.mode == 'playlist' %}selected{% endif %}>Playlist</option>
-      <option value="artist" {% if config.mode == 'artist' %}selected{% endif %}>Artist</option>
-      <option value="device" {% if config.mode == 'device' %}selected{% endif %}>Device</option>
-      <option value="delete" {% if config.mode == 'delete' %}selected{% endif %}>Delete Mode</option>
-    </select>
-
-    <button type="submit">💾 Save Configuration</button>
-  </form>
-
-  {% if config.mode == 'device' %}
-    <h2>🖼 Device Images</h2>
-    {% for device in devices %}
-    <div class="device">
-      <h3>{{ device.name }}</h3>
-      <form action="{{ url_for('upload', device_id=device.id) }}" method="POST" enctype="multipart/form-data">
-        <label for="file-{{ device.id }}">
-          <img src="{{ device.image_url }}" alt="Device image">
-        </label>
-        <input id="file-{{ device.id }}" type="file" name="file" accept="image/*" onchange="this.form.submit()">
-      </form>
-    </div>
-    {% endfor %}
-  {% endif %}
-
+  </div>
 </body>
 </html>
