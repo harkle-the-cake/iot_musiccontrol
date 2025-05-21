@@ -1,94 +1,121 @@
-from pathlib import Path
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
 from flask import Flask, request, render_template, redirect, url_for
 from spotipy import Spotify
 from spotipy.oauth2 import SpotifyOAuth
 from PIL import Image
+from pathlib import Path
 import os
-from dotenv import load_dotenv
 import json
+from dotenv import load_dotenv
 
-# Setup
+# Konfiguration
+BASE_PATH = Path(__file__).resolve().parent
+CONFIG_PATH = BASE_PATH / "config.json"
+IMAGE_DIR = BASE_PATH / "static" / "images"
+IMAGE_DIR.mkdir(parents=True, exist_ok=True)
+
+# Flask App
 app = Flask(__name__)
-base_dir = Path(__file__).resolve().parent
-dotenv_path = base_dir / ".env"
-load_dotenv(dotenv_path=dotenv_path)
+app.config['UPLOAD_FOLDER'] = IMAGE_DIR
+app.config['MAX_CONTENT_LENGTH'] = 5 * 1024 * 1024  # max 5MB
 
-UPLOAD_FOLDER = base_dir / "static" / "images"
-UPLOAD_FOLDER.mkdir(parents=True, exist_ok=True)
-app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
-app.config['MAX_CONTENT_LENGTH'] = 5 * 1024 * 1024  # 5MB max
+# Konfiguration laden
+def load_config():
+    if CONFIG_PATH.exists():
+        with open(CONFIG_PATH) as f:
+            return json.load(f)
+    return {
+        "client_id": "",
+        "client_secret": "",
+        "redirect_uri": "",
+        "rotation": 0,
+        "mode": "device"
+    }
 
-def get_spotify_client():
-    client_id = os.getenv("SPOTIFY_CLIENT_ID")
-    client_secret = os.getenv("SPOTIFY_CLIENT_SECRET")
-    redirect_uri = os.getenv("SPOTIFY_REDIRECT_URI")
-    if not client_id or not client_secret or not redirect_uri:
-        return None
+# Konfiguration speichern
+def save_config(data):
+    with open(CONFIG_PATH, "w") as f:
+        json.dump(data, f, indent=2)
+
+# Spotify Auth Manager erzeugen
+def get_spotify(config):
+    if not all([config.get("client_id"), config.get("client_secret"), config.get("redirect_uri")]):
+        return None, "⚠️ Spotify Zugangsdaten unvollständig."
     try:
-        auth = SpotifyOAuth(
-            client_id=client_id,
-            client_secret=client_secret,
-            redirect_uri=redirect_uri,
-            scope="user-read-playback-state user-read-private user-read-email",
-            cache_path=base_dir / ".spotify_cache",
+        sp = Spotify(auth_manager=SpotifyOAuth(
+            client_id=config["client_id"],
+            client_secret=config["client_secret"],
+            redirect_uri=config["redirect_uri"],
+            scope="user-read-playback-state user-read-private",
+            cache_path=BASE_PATH / ".spotify_cache",
             open_browser=True
-        )
-        return Spotify(auth_manager=auth)
-    except Exception:
-        return None
-
-def write_config(data: dict):
-    lines = []
-    for key, val in data.items():
-        lines.append(f"{key}={val}")
-    with open(dotenv_path, "w") as f:
-        f.write("\n".join(lines))
-    load_dotenv(dotenv_path=dotenv_path, override=True)
+        ))
+        return sp, None
+    except Exception as e:
+        return None, f"❌ Fehler beim Authentifizieren: {e}"
 
 @app.route("/", methods=["GET"])
 def index():
-    config = {
-        "SPOTIFY_CLIENT_ID": os.getenv("SPOTIFY_CLIENT_ID", ""),
-        "SPOTIFY_CLIENT_SECRET": os.getenv("SPOTIFY_CLIENT_SECRET", ""),
-        "SPOTIFY_REDIRECT_URI": os.getenv("SPOTIFY_REDIRECT_URI", "http://localhost:8888/callback"),
-        "SCREEN_ROTATION": os.getenv("SCREEN_ROTATION", "0"),
-        "DISPLAY_MODE": os.getenv("DISPLAY_MODE", "album")
-    }
-
-    status = {"ok": False, "track": None}
-    sp = get_spotify_client()
+    config = load_config()
+    spotify_status = {"ok": False, "message": "❌ Nicht verbunden", "track": None}
     devices = []
 
-    if sp:
+    sp, error = get_spotify(config)
+    if error:
+        spotify_status["message"] = error
+    elif sp:
         try:
             playback = sp.current_playback()
-            if playback and playback.get("item"):
-                item = playback["item"]
-                name = item.get("name", "Unknown")
-                artist = item.get("artists", [{}])[0].get("name", "")
-                status = {"ok": True, "track": f"{name} – {artist}"}
+            if playback:
+                spotify_status["ok"] = True
+                item = playback.get("item")
+                if item:
+                    artist = item['artists'][0]['name']
+                    name = item['name']
+                    spotify_status["track"] = f"{artist} – {name}"
+                else:
+                    spotify_status["track"] = "🎵 Keine Wiedergabe"
+                spotify_status["message"] = "✅ Verbunden"
+            else:
+                spotify_status["message"] = "🔇 Keine Wiedergabe"
         except Exception as e:
-            status["track"] = f"Error: {e}"
+            spotify_status["message"] = f"❌ Fehler beim Abrufen: {e}"
 
-    if config["DISPLAY_MODE"] == "device" and sp:
-        try:
-            raw_devices = sp.devices().get("devices", [])
-            for d in raw_devices:
-                image_path = UPLOAD_FOLDER / f"{d['id']}.jpg"
-                devices.append({
-                    "id": d["id"],
-                    "name": d["name"],
-                    "image_url": url_for("static", filename=f"images/{d['id']}.jpg") if image_path.exists() else url_for("static", filename="images/default.jpg")
-                })
-        except Exception:
-            pass
+        # Nur wenn Modus device ist
+        if config.get("mode") == "device":
+            try:
+                devices = sp.devices().get('devices', [])
+                for d in devices:
+                    device_id = d.get("id")
+                    device_name = d.get("name", "Unnamed")
+                    image_path = IMAGE_DIR / f"{device_id}.jpg"
+                    d["image_url"] = url_for('static', filename=f"images/{device_id}.jpg") if image_path.exists() \
+                                     else url_for('static', filename="images/default.jpg")
+                    d["name"] = device_name
+            except Exception as e:
+                devices = []
 
-    return render_template("index.html", config=config, devices=devices, status=status)
+    return render_template("index.html", config=config, status=spotify_status, devices=devices)
+
+@app.route("/save-config", methods=["POST"])
+def save_conf():
+    config = {
+        "client_id": request.form.get("client_id", ""),
+        "client_secret": request.form.get("client_secret", ""),
+        "redirect_uri": request.form.get("redirect_uri", ""),
+        "rotation": int(request.form.get("rotation", 0)),
+        "mode": request.form.get("mode", "device")
+    }
+    save_config(config)
+    return redirect(url_for("index"))
 
 @app.route("/upload/<device_id>", methods=["POST"])
 def upload(device_id):
     if 'file' not in request.files:
         return "No file part", 400
+
     file = request.files['file']
     if file.filename == '':
         return "No selected file", 400
@@ -99,29 +126,15 @@ def upload(device_id):
         min_edge = min(width, height)
         left = (width - min_edge) // 2
         top = (height - min_edge) // 2
-        image = image.crop((left, top, left + min_edge, top + min_edge))
+        right = left + min_edge
+        bottom = top + min_edge
+        image = image.crop((left, top, right, bottom))
         image = image.resize((240, 240))
-        save_path = app.config['UPLOAD_FOLDER'] / f"{device_id}.jpg"
-        image.save(save_path)
-        return redirect(url_for("index"))
+        image.save(IMAGE_DIR / f"{device_id}.jpg")
+        return redirect(url_for('index'))
+
     except Exception as e:
         return f"Upload failed: {e}", 500
-
-@app.route("/update-config", methods=["POST"])
-def update_config():
-    config = {
-        "SPOTIFY_CLIENT_ID": request.form.get("SPOTIFY_CLIENT_ID", "").strip(),
-        "SPOTIFY_CLIENT_SECRET": request.form.get("SPOTIFY_CLIENT_SECRET", "").strip(),
-        "SPOTIFY_REDIRECT_URI": request.form.get("SPOTIFY_REDIRECT_URI", "").strip(),
-        "SCREEN_ROTATION": request.form.get("SCREEN_ROTATION", "0"),
-        "DISPLAY_MODE": request.form.get("DISPLAY_MODE", "album")
-    }
-    write_config(config)
-    return redirect(url_for("index"))
-
-@app.route("/callback")
-def callback():
-    return redirect(url_for("index"))
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=8080)
