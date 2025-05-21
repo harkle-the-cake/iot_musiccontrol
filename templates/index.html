@@ -78,7 +78,7 @@
     <p class="status-ok">✅ Verbunden – Letzter Track: <strong>{{ spotify_status.track }}</strong> von {{ spotify_status.artist }}</p>
   {% else %}
     <p class="status-fail">❌ Nicht verbunden</p>
-    <a href="{{ url_for('login') }}">🔐 Login bei Spotify starten</a>
+    <a href="{{ url_for('index') }}">🔐 Login bei Spotify starten</a>
   {% endif %}
 </section>
 
