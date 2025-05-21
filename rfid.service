@@ -1,0 +1,13 @@
+[Unit]
+Description=RFID service
+After=network.target
+
+[Service]
+ExecStart=/usr/bin/python3 /home/pi/iot_musiccontrol/rfid.py
+WorkingDirectory=/home/pi/iot_musiccontrol
+Environment=PYTHONUNBUFFERED=1
+Restart=always
+User=pi
+
+[Install]
+WantedBy=multi-user.target

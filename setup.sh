@@ -2,12 +2,14 @@
 
 set -e  # abort on error
 
-SERVICE_NAME="devices-display.service"
-SERVICE_NAME_UPLOAD="image-upload.service"
+SERVICE_NAME="display.service"
+SERVICE_NAME_WEB="web.service"
+SERVICE_NAME_RFID="rfid.service"
 SCRIPT_NAME="app.py"
 ENV_FILE=".env"
 SERVICE_PATH="/etc/systemd/system/$SERVICE_NAME"
-SERVICE_PATH_UPLOAD="/etc/systemd/system/$SERVICE_NAME_UPLOAD"
+SERVICE_PATH_WEB="/etc/systemd/system/$SERVICE_NAME_WEB"
+SERVICE_PATH_RFID="/etc/systemd/system/$SERVICE_NAME_RFID"
 APP_DIR="$(pwd)"
 CONFIG_FILE="/boot/config.txt"
 
@@ -39,53 +41,46 @@ sudo apt install -y python3 python3-pip libjpeg-dev libopenjp2-7 libopenblas0 \
  
 sudo apt autoremove
 
-# Spotipy (nur über pip verfügbar)
+# 2. Spotipy (nur über pip verfügbar)
 pip3 install --no-cache-dir spotipy python-dotenv --break-system-packages
 
-# 2. Prompt for Spotify credentials
-if [ ! -f "$ENV_FILE" ]; then
-  echo "🔐 Enter your Spotify Developer credentials:"
-  read -p "Client ID: " CLIENT_ID
-  read -p "Client Secret: " CLIENT_SECRET
-
-  echo "📄 Writing .env file..."
-  cat > "$ENV_FILE" <<EOF
-SPOTIFY_CLIENT_ID=$CLIENT_ID
-SPOTIFY_CLIENT_SECRET=$CLIENT_SECRET
-EOF
-else
-  echo "✅ Found existing .env – skipping credential input."
-fi
-
-# 4. Run app once for Spotify login
-echo "🔑 Launching app for initial Spotify login..."
-python3 "$SCRIPT_NAME" --once
-
-# 5. Install and start systemd service
+# 3. Install and start systemd service
 if [ ! -f "$SERVICE_PATH" ]; then
-  echo "🛠️ Installing systemd service..."
+  echo "🛠️ Installing systemd service for the display..."
   sudo cp "$SERVICE_NAME" "$SERVICE_PATH"
 fi
 
-echo "🔁 Enabling and starting service..."
+echo "🔁 Enabling and starting service for the display..."
 sudo systemctl daemon-reload
 sudo systemctl enable "$SERVICE_NAME"
 sudo systemctl restart "$SERVICE_NAME"
 
-# 6 Install and start systemd service
-if [ ! -f "$SERVICE_PATH_UPLOAD" ]; then
-  echo "🛠️ Installing systemd service for image upload..."
-  sudo cp "$SERVICE_NAME_UPLOAD" "$SERVICE_PATH_UPLOAD"
+# 4 Install and start systemd service
+if [ ! -f "$SERVICE_PATH_WEB" ]; then
+  echo "🛠️ Installing systemd service for web..."
+  sudo cp "$SERVICE_NAME_WEB" "$SERVICE_PATH_WEB"
 fi
 
-echo "🔁 Enabling and starting service for image upload..."
+echo "🔁 Enabling and starting service for web..."
 sudo systemctl daemon-reload
-sudo systemctl enable "$SERVICE_NAME_UPLOAD"
-sudo systemctl restart "$SERVICE_NAME_UPLOAD"
+sudo systemctl enable "$SERVICE_NAME_WEB"
+sudo systemctl restart "$SERVICE_NAME_WEB"
+
+
+# 5 Install and start systemd service
+if [ ! -f "$SERVICE_PATH_RFID" ]; then
+  echo "🛠️ Installing systemd service for rfid..."
+  sudo cp "$SERVICE_NAME_UPLOAD" "$SERVICE_PATH_RFID"
+fi
+
+echo "🔁 Enabling and starting service for rfid..."
+sudo systemctl daemon-reload
+sudo systemctl enable "$SERVICE_NAME_RFID"
+sudo systemctl restart "$SERVICE_NAME_RFID"
 
 echo "✅ Setup complete."
 
-# 7. Configure journald log rotation
+# 6. Configure journald log rotation
 echo "🗂 Configuring journald log rotation..."
 
 JOURNAL_CONF="/etc/systemd/journald.conf"
@@ -113,7 +108,7 @@ else
     echo "✅ Journald already configured."
 fi
 
-# 8. Reboot
+# 7. Reboot
 read -p "🔁 Reboot now to activate? [y/N]: " REBOOT
 if [[ "$REBOOT" =~ ^[Yy]$ ]]; then
   echo "🔄 Rebooting now..."
