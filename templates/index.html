@@ -85,7 +85,7 @@
 <!-- Abschnitt 2: Konfiguration -->
 <section>
   <h2>⚙️ Konfiguration</h2>
-  <form action="{{ url_for('save_config') }}" method="POST">
+  <form action="{{ url_for('save-config') }}" method="POST">
     <label>Client ID: <input name="client_id" value="{{ config.client_id }}"></label>
     <label>Client Secret: <input name="client_secret" value="{{ config.client_secret }}"></label>
     <label>Redirect URI: <input name="redirect_uri" value="{{ config.redirect_uri }}"></label>
