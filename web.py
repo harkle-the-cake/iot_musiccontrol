@@ -174,4 +174,4 @@ def callback():
         return "Authorization failed", 500
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=8080, ssl_context=("~/certs/rpi.crt", "~/certs/rpi.key"))
+    app.run(host="0.0.0.0", port=8080, ssl_context=("certs/rpi.crt", "certs/rpi.key"))
