@@ -136,5 +136,40 @@ def upload(device_id):
     except Exception as e:
         return f"Upload failed: {e}", 500
 
+@app.route("/login")
+def login():
+    config = load_config()
+    sp_oauth = SpotifyOAuth(
+        client_id=config.get("client_id", ""),
+        client_secret=config.get("client_secret", ""),
+        redirect_uri=config.get("redirect_uri", ""),
+        scope="user-read-playback-state user-modify-playback-state user-read-private user-read-email",
+        cache_path=Path(__file__).resolve().parent / ".spotify_cache",
+        open_browser=False
+    )
+    auth_url = sp_oauth.get_authorize_url()
+    return redirect(auth_url)
+
+@app.route("/callback")
+def callback():
+    config = load_config()
+    sp_oauth = SpotifyOAuth(
+        client_id=config.get("client_id", ""),
+        client_secret=config.get("client_secret", ""),
+        redirect_uri=config.get("redirect_uri", ""),
+        scope="user-read-playback-state user-modify-playback-state user-read-private user-read-email",
+        cache_path=Path(__file__).resolve().parent / ".spotify_cache",
+        open_browser=False
+    )
+    code = request.args.get("code")
+    if not code:
+        return "Missing code in callback", 400
+
+    token_info = sp_oauth.get_access_token(code, as_dict=True)
+    if token_info:
+        return redirect(url_for('index'))
+    else:
+        return "Authorization failed", 500
+
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=8080)
