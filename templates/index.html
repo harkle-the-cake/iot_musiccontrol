@@ -71,7 +71,7 @@
 
   <div class="section">
     <h2>⚙️ Configuration</h2>
-    <form method="POST" action="{{ url_for('save_config') }}">
+    <form method="POST" action="{{ url_for('save_conf') }}">
       <label>Client ID: <input type="text" name="client_id" value="{{ config.client_id }}"></label>
       <label>Client Secret: <input type="text" name="client_secret" value="{{ config.client_secret }}"></label>
       <label>Redirect URI: <input type="text" name="redirect_uri" value="{{ config.redirect_uri }}"></label>
