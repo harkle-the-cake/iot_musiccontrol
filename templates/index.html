@@ -44,7 +44,7 @@
     <div class="card mb-4">
       <div class="card-header">⚙️ Konfiguration</div>
       <div class="card-body">
-        <form method="POST" action="{{ url_for('save_config') }}">
+        <form method="POST" action="{{ url_for('save_conf') }}">
           <div class="mb-3">
             <label class="form-label">Client ID</label>
             <input type="text" name="client_id" class="form-control" value="{{ config.client_id }}">
