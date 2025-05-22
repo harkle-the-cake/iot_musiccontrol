@@ -145,8 +145,10 @@ def login():
         redirect_uri=config.get("redirect_uri", ""),
         scope="user-read-playback-state user-modify-playback-state user-read-private user-read-email",
         cache_path=Path(__file__).resolve().parent / ".spotify_cache",
-        open_browser=False
+        open_browser=true
     )
+    print("🔁 Using redirect URI:", config["redirect_uri"])
+    print("🔁 Client ID:", config["client_id"][:8], "...")  # zur Vermeidung von Leaks
     auth_url = sp_oauth.get_authorize_url()
     return redirect(auth_url)
 
@@ -159,7 +161,7 @@ def callback():
         redirect_uri=config.get("redirect_uri", ""),
         scope="user-read-playback-state user-modify-playback-state user-read-private user-read-email",
         cache_path=Path(__file__).resolve().parent / ".spotify_cache",
-        open_browser=False
+        open_browser=true
     )
     code = request.args.get("code")
     if not code:
