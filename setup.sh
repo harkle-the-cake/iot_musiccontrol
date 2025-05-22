@@ -44,6 +44,10 @@ sudo apt autoremove
 # 2. Spotipy (nur über pip verfügbar)
 pip3 install --no-cache-dir spotipy python-dotenv --break-system-packages
 
+# 3. create certs
+mkdir ~/certs && cd ~/certs
+openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout rpi.key -out rpi.crt
+
 # 3. Install and start systemd service
 if [ ! -f "$SERVICE_PATH" ]; then
   echo "🛠️ Installing systemd service for the display..."
