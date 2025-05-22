@@ -63,7 +63,7 @@
   <div class="section">
     <h2>🔐 Spotify Login Status</h2>
     {% if spotify_status %}
-      <p class="status-ok">✅ Connected to Spotify – Last Track: <strong>{{ spotify_track }}</strong></p>
+      <p class="status-ok">✅ Connected to Spotify – Last Track: <strong>{{ status.track }}</strong></p>
     {% else %}
       <p class="status-fail">❌ Not authenticated with Spotify</p>
     {% endif %}
