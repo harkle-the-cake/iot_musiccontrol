@@ -7,6 +7,7 @@ import time
 import logging
 import requests
 import io
+import json
 import spotipy
 from spotipy.oauth2 import SpotifyOAuth
 from PIL import Image
@@ -31,7 +32,7 @@ cache_path = Path(__file__).resolve().parent / ".spotify_cache"
 
 # Set up logging
 logging.basicConfig(
-    level=logging.INFO,
+    level=logging.DEBUG,
     format="%(asctime)s [%(levelname)s] %(message)s",
 )
 
@@ -105,6 +106,8 @@ def process_once():
                 logging.warning("🔌 No device info.")
         elif mode in ["album", "playlist", "artist"]:
             context = playback.get("context", {})
+            logging.debug(f"🔍 Playback-Kontext: {json.dumps(context, indent=2)}")
+            
             if context and context.get("type") == mode:
                 if context["type"] == "artist" and not context["uri"].startswith("spotify:artist"):
                     logging.warning("⚠️ No artist URI in context.")
