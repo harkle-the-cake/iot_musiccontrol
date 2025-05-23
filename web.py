@@ -31,7 +31,7 @@ def load_config():
         "client_secret": "",
         "redirect_uri": "",
         "rotation": 0,
-        "mode": "device"
+        "displayMode": "device"
     }
 
 # Konfiguration speichern
@@ -84,7 +84,7 @@ def index():
             spotify_status["message"] = f"❌ Fehler beim Abrufen: {e}"
 
         # Nur wenn Modus device ist
-        if config.get("mode") == "device":
+        if config.get("displayMode") == "device":
             try:
                 devices = sp.devices().get('devices', [])
                 for d in devices:
@@ -106,7 +106,7 @@ def save_conf():
         "client_secret": request.form.get("client_secret", ""),
         "redirect_uri": request.form.get("redirect_uri", ""),
         "rotation": int(request.form.get("rotation", 0)),
-        "mode": request.form.get("mode", "device")
+        "displayMode": request.form.get("displayMode", "device")
     }
     save_config(config)
     return redirect(url_for("index"))

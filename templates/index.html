@@ -68,13 +68,24 @@
             </select>
           </div>
           <div class="mb-3">
-            <label class="form-label">Modus</label>
-            <select name="mode" class="form-select">
-              <option value="album" {% if config.mode == "album" %}selected{% endif %}>Album</option>
-              <option value="playlist" {% if config.mode == "playlist" %}selected{% endif %}>Playlist</option>
-              <option value="artist" {% if config.mode == "artist" %}selected{% endif %}>Artist</option>
-              <option value="device" {% if config.mode == "device" %}selected{% endif %}>Device</option>
-              <option value="delete" {% if config.mode == "delete" %}selected{% endif %}>Löschen</option>
+            <label class="form-label">Display-Modus</label>
+            <select name="displayMode" class="form-select">
+              <option value="album" {% if config.displayMode == "album" %}selected{% endif %}>Album</option>
+              <option value="playlist" {% if config.displayMode == "playlist" %}selected{% endif %}>Playlist</option>
+              <option value="artist" {% if config.displayMode == "artist" %}selected{% endif %}>Artist</option>
+              <option value="device" {% if config.displayMode == "device" %}selected{% endif %}>Device</option>
+              <option value="auto" {% if config.displayMode == "auto" %}selected{% endif %}>Auto</option>
+            </select>
+          </div>
+		  <div class="mb-3">
+            <label class="form-label">RFID-Modus</label>
+            <select name="displayMode" class="form-select">
+              <option value="album" {% if config.rfidMode == "album" %}selected{% endif %}>Album</option>
+              <option value="playlist" {% if config.rfidMode == "playlist" %}selected{% endif %}>Playlist</option>
+              <option value="artist" {% if config.rfidMode == "artist" %}selected{% endif %}>Artist</option>
+              <option value="auto" {% if config.rfidMode == "auto" %}selected{% endif %}>Auto</option>
+              <option value="device" {% if config.rfidMode == "device" %}selected{% endif %}>Device</option>
+              <option value="delete" {% if config.rfidMode == "delete" %}selected{% endif %}>Löschen</option>
             </select>
           </div>
           <button type="submit" class="btn btn-success">💾 Speichern</button>
