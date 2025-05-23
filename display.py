@@ -13,30 +13,12 @@ from PIL import Image
 import spidev as SPI
 from pathlib import Path
 from dotenv import load_dotenv
-
-# Argument parsing
-parser = argparse.ArgumentParser(description="Spotify Cover Display")
-parser.add_argument("--once", "-o", action="store_true", help="Run once for authentication and exit")
-args = parser.parse_args()
-
-# Load environment variables from .env file
-load_dotenv(dotenv_path=Path(__file__).resolve().parent / ".env")
-
-cache_path = Path(__file__).resolve().parent / ".spotify_cache"
-
 # Import display library (adjust if needed)
 from libs import LCD_1inch3
 
-# Read Spotify credentials from environment
-client_id = os.getenv("SPOTIFY_CLIENT_ID")
-client_secret = os.getenv("SPOTIFY_CLIENT_SECRET")
-
-if not client_id or not client_secret:
-    raise ValueError("❌ Missing SPOTIFY_CLIENT_ID or SPOTIFY_CLIENT_SECRET in environment!")
-
-if not (Path(__file__).resolve().parent / "static/images/default.jpg").exists():
-    raise FileNotFoundError("⚠️ Default image not found: static/images/default.jpg")
-
+# vars
+code_patch = ""
+last_track_id = None
 
 # GPIO pin configuration
 RST = 27
@@ -45,34 +27,14 @@ BL = 18
 bus = 0
 device = 0
 
+cache_path = Path(__file__).resolve().parent / ".spotify_cache"
+
 # Set up logging
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s [%(levelname)s] %(message)s",
 )
 
-# Initialize display
-disp = LCD_1inch3.LCD_1inch3(
-    spi=SPI.SpiDev(bus, device),
-    spi_freq=10000000,
-    rst=RST,
-    dc=DC,
-    bl=BL
-)
-disp.Init()
-disp.clear()
-
-# Initialize Spotify API authentication
-sp = spotipy.Spotify(auth_manager=SpotifyOAuth(
-    client_id=client_id,
-    client_secret=client_secret,
-    redirect_uri="http://127.0.0.1:8888/callback",
-    scope="user-read-playback-state user-read-private user-read-email",
-    cache_path = Path(__file__).resolve().parent / ".spotify_cache",
-    open_browser=False
-))
-
-last_track_id = None
 
 def mapToImage(device):
     """Return local image path for a given Spotify device dict."""
@@ -104,24 +66,103 @@ def show_device(image_path):
     except Exception as e:
         logging.error(f"Failed to load or display device image: {e}")
 
+# Konfiguration laden
+def load_config():
+    config_path = Path(__file__).resolve().parent / "config.json"
+    if config_path.exists():
+        with open(config_path) as f:
+            import json
+            return json.load(f)
+    return {"mode": "device"}
+
+def show_image_from_url(url):
+    try:
+        import requests, io
+        from PIL import Image
+        response = requests.get(url)
+        image = Image.open(io.BytesIO(response.content)).convert("RGB")
+        image = image.resize((disp.width, disp.height))
+        disp.ShowImage(image)
+    except Exception as e:
+        logging.error(f"Failed to load image from URL: {e}")
+
 def process_once():
-    """Fetch current track and show cover once."""
+    config = load_config()
+    mode = config.get("mode", "device")
+
     try:
         playback = sp.current_playback()
-        if playback and playback.get('device'):
-            device = playback['device']
-            logging.info(f"🎵 Now playing on device: {device.get('name', 'Unknown')} ({device.get('id', 'no-id')})")
-            image_url = mapToImage(device)
-            show_device(image_url)
-        else:
-            logging.warning("⏸ No track playing or playback data available.")
-    except Exception as e:
-        logging.error(f"Error while querying Spotify playback: {e}")
+        if not playback:
+            logging.warning("⏸ No playback available.")
+            return
 
-if args.once:
-    logging.info("▶️ Run-once mode activated (for initial Spotify login).")
-    process_once()
-    sys.exit(0)
+        if mode == "device":
+            device = playback.get("device")
+            if device:
+                image_path = mapToImage(device)
+                show_device(image_path)
+            else:
+                logging.warning("🔌 No device info.")
+        elif mode in ["album", "playlist", "artist"]:
+            context = playback.get("context", {})
+            if context and context.get("type") == mode:
+                if context["type"] == "artist" and not context["uri"].startswith("spotify:artist"):
+                    logging.warning("⚠️ No artist URI in context.")
+                    return
+                uri = context["uri"]
+                if mode == "artist":
+                    artist_id = uri.split(":")[-1]
+                    artist = sp.artist(artist_id)
+                    images = artist.get("images", [])
+                elif mode == "playlist":
+                    playlist_id = uri.split(":")[-1]
+                    playlist = sp.playlist(playlist_id)
+                    images = playlist.get("images", [])
+                elif mode == "album":
+                    album_id = uri.split(":")[-1]
+                    album = sp.album(album_id)
+                    images = album.get("images", [])
+                else:
+                    images = []
+
+                if images:
+                    show_image_from_url(images[0]["url"])
+                else:
+                    logging.warning("🖼 No images found in context.")
+            else:
+                logging.warning(f"🎯 No {mode} context.")
+        elif mode == "delete":
+            delete_image = Path(__file__).resolve().parent / "static/images/delete.jpg"
+            if delete_image.exists():
+                show_device(delete_image)
+            else:
+                logging.warning("🗑 Kein delete.jpg gefunden.")
+        else:
+            logging.warning(f"❓ Unbekannter Modus: {mode}")
+
+    except Exception as e:
+        logging.error(f"Error in process_once(): {e}")
+
+# Initialize display
+disp = LCD_1inch3.LCD_1inch3(
+    spi=SPI.SpiDev(bus, device),
+    spi_freq=10000000,
+    rst=RST,
+    dc=DC,
+    bl=BL
+)
+disp.Init()
+disp.clear()
+
+config = load_config()
+sp = spotipy.Spotify(auth_manager=SpotifyOAuth(
+    client_id=config.get("client_id"),
+    client_secret=config.get("client_secret"),
+    redirect_uri=config.get("redirect_uri"),
+    scope="user-read-playback-state user-modify-playback-state user-read-private user-read-email",
+    cache_path=Path(__file__).resolve().parent / ".spotify_cache",
+    open_browser=False
+))
 
 # Normal loop mode
 while True:
