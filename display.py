@@ -89,13 +89,29 @@ def show_image_from_url(url):
 
 def process_once():
     config = load_config()
-    mode = config.get("mode", "device")
+    mode = config.get("displayMode", "device")
 
     try:
         playback = sp.current_playback()
         if not playback:
             logging.warning("⏸ No playback available.")
             return
+
+        context = playback.get("context", {})
+        context_type = context.get("type", "")
+        uri = context.get("uri", "")
+
+        if mode == "delete":
+            delete_image = Path(__file__).resolve().parent / "static/images/delete.jpg"
+            if delete_image.exists():
+                show_device(delete_image)
+            else:
+                logging.warning("🗑 Kein delete.jpg gefunden.")
+            return
+
+        if mode == "auto":
+            if context_type:
+                mode = context_type  # automatisch übernehmen
 
         if mode == "device":
             device = playback.get("device")
@@ -104,42 +120,39 @@ def process_once():
                 show_device(image_path)
             else:
                 logging.warning("🔌 No device info.")
-        elif mode in ["album", "playlist", "artist"]:
-            context = playback.get("context", {})
-            logging.debug(f"🔍 Playback-Kontext: {json.dumps(context, indent=2)}")
-            
-            if context and context.get("type") == mode:
-                if context["type"] == "artist" and not context["uri"].startswith("spotify:artist"):
-                    logging.warning("⚠️ No artist URI in context.")
-                    return
-                uri = context["uri"]
-                if mode == "artist":
-                    artist_id = uri.split(":")[-1]
-                    artist = sp.artist(artist_id)
-                    images = artist.get("images", [])
-                elif mode == "playlist":
-                    playlist_id = uri.split(":")[-1]
-                    playlist = sp.playlist(playlist_id)
-                    images = playlist.get("images", [])
-                elif mode == "album":
-                    album_id = uri.split(":")[-1]
-                    album = sp.album(album_id)
-                    images = album.get("images", [])
-                else:
-                    images = []
-
+        elif mode == "album":
+            item = playback.get("item")
+            images = item.get("album", {}).get("images", []) if item else []
+            if images:
+                show_image_from_url(images[0]["url"])
+        elif mode == "playlist":
+            try:
+                playlist_id = uri.split(":")[-1]
+                playlist = sp.playlist(playlist_id)
+                images = playlist.get("images", [])
                 if images:
                     show_image_from_url(images[0]["url"])
                 else:
-                    logging.warning("🖼 No images found in context.")
-            else:
-                logging.warning(f"🎯 No {mode} context.")
-        elif mode == "delete":
-            delete_image = Path(__file__).resolve().parent / "static/images/delete.jpg"
-            if delete_image.exists():
-                show_device(delete_image)
-            else:
-                logging.warning("🗑 Kein delete.jpg gefunden.")
+                    raise Exception("No images in playlist")
+            except Exception as e:
+                logging.warning(f"⚠️ Fehler beim Playlist-Fallback: {e}")
+                item = playback.get("item")
+                track_images = item.get("album", {}).get("images", []) if item else []
+                if track_images:
+                    show_image_from_url(track_images[0]["url"])
+        elif mode == "artist":
+            try:
+                artist_id = uri.split(":")[-1]
+                artist = sp.artist(artist_id)
+                images = artist.get("images", [])
+                if images:
+                    show_image_from_url(images[0]["url"])
+            except Exception as e:
+                logging.warning(f"⚠️ Fehler beim Artist-Fallback: {e}")
+                item = playback.get("item")
+                track_images = item.get("album", {}).get("images", []) if item else []
+                if track_images:
+                    show_image_from_url(track_images[0]["url"])
         else:
             logging.warning(f"❓ Unbekannter Modus: {mode}")
 
