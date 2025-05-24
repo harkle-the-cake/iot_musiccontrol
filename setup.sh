@@ -7,9 +7,7 @@ SERVICE_NAME_WEB="web.service"
 SERVICE_NAME_RFID="rfid.service"
 SCRIPT_NAME="app.py"
 ENV_FILE=".env"
-SERVICE_PATH="/etc/systemd/system/$SERVICE_NAME"
-SERVICE_PATH_WEB="/etc/systemd/system/$SERVICE_NAME_WEB"
-SERVICE_PATH_RFID="/etc/systemd/system/$SERVICE_NAME_RFID"
+SERVICE_PATH="/etc/systemd/system/"
 APP_DIR="$(pwd)"
 CONFIG_FILE="/boot/config.txt"
 
@@ -32,7 +30,7 @@ else
   echo "✅ SPI already enabled."
 fi
 
-# 1. Install system dependencies
+# Install system dependencies
 echo "📦 Installing required system packages..."
 # sudo apt update
 					
@@ -41,51 +39,45 @@ sudo apt install -y python3 python3-pip libjpeg-dev libopenjp2-7 libopenblas0 \
  
 sudo apt autoremove
 
-# 2. Spotipy (nur über pip verfügbar)
+# Spotipy (nur über pip verfügbar)
 pip3 install --no-cache-dir spotipy python-dotenv --break-system-packages
 
-# 3. create certs
+# create certs
 cd ~/iot_musiccontrol/
 mkdir certs && cd certs/
 openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout rpi.key -out rpi.crt
 
-# 3. Install and start systemd service
-if [ ! -f "$SERVICE_PATH" ]; then
-  echo "🛠️ Installing systemd service for the display..."
-  sudo cp "$SERVICE_NAME" "$SERVICE_PATH"
-fi
+# Install and start systemd service
+echo "🛠️ Installing systemd service for the display..."
+sudo cp "$SERVICE_NAME" "$SERVICE_PATH"
 
-echo "🔁 Enabling and starting service for the display..."
+# Install and start systemd service
+echo "🛠️ Installing systemd service for web..."
+sudo cp "$SERVICE_NAME_WEB" "$SERVICE_PATH"
+
+# Install and start systemd service
+echo "🛠️ Installing systemd service for rfid..."
+sudo cp "$SERVICE_NAME_RFID" "$SERVICE_PATH"
+
+# reloading service deamon
 sudo systemctl daemon-reload
+
+# enabling all services
+echo "🔁 Enabling and starting service for the display..."
 sudo systemctl enable "$SERVICE_NAME"
 sudo systemctl restart "$SERVICE_NAME"
 
-# 4 Install and start systemd service
-if [ ! -f "$SERVICE_PATH_WEB" ]; then
-  echo "🛠️ Installing systemd service for web..."
-  sudo cp "$SERVICE_NAME_WEB" "$SERVICE_PATH_WEB"
-fi
-
 echo "🔁 Enabling and starting service for web..."
-sudo systemctl daemon-reload
 sudo systemctl enable "$SERVICE_NAME_WEB"
 sudo systemctl restart "$SERVICE_NAME_WEB"
 
-
-# 5 Install and start systemd service
-if [ ! -f "$SERVICE_PATH_RFID" ]; then
-  echo "🛠️ Installing systemd service for rfid..."
-  sudo cp "$SERVICE_NAME_UPLOAD" "$SERVICE_PATH_RFID"
-fi
-
 echo "🔁 Enabling and starting service for rfid..."
-sudo systemctl daemon-reload
 sudo systemctl enable "$SERVICE_NAME_RFID"
 sudo systemctl restart "$SERVICE_NAME_RFID"
 
 echo "✅ Setup complete."
 
-# 6. Configure journald log rotation
+# Configure journald log rotation
 echo "🗂 Configuring journald log rotation..."
 
 JOURNAL_CONF="/etc/systemd/journald.conf"
@@ -113,7 +105,7 @@ else
     echo "✅ Journald already configured."
 fi
 
-# 7. Reboot
+# Reboot
 read -p "🔁 Reboot now to activate? [y/N]: " REBOOT
 if [[ "$REBOOT" =~ ^[Yy]$ ]]; then
   echo "🔄 Rebooting now..."
