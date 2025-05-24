@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import time
 import RPi.GPIO as GPIO
-from libs import SimpleMFRC522Device2 as SimpleMFRC522Device2
+from libs.SimpleMFRC522Device2 import SimpleMFRC522Device2
 
 reader = SimpleMFRC522Device2()
 
