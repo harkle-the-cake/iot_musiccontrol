@@ -147,7 +147,8 @@ def process_once():
             except Exception as e:
                 logging.warning(f"⚠️ Fehler beim Playlist-Aufruf: {e}")
                 if initialMode == "auto":    
-                    item = playback.get("item")
+                    item = playback.get("item")                    
+                    track_images = item.get("album", {}).get("images", []) if item else []
                     if track_images:
                         show_image_from_url(track_images[0]["url"])
                     else:
