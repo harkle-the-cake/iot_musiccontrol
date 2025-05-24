@@ -117,28 +117,30 @@ def main():
             logging.info("📡 Waiting for RFID tag...")
             id, text = reader.read_no_block()
             text = text.strip()
-
-            if mode == "delete":
-                if text:
-                    logging.info(f"🗑 Tag will be deleted (content: {text})")
-                    reader.write_no_block("")  # clear tag
-                    logging.info("✅ Tag erased.")
-                else:
-                    logging.info("💡 Tag already empty.")
-            else:
-                if text:
-                    logging.info(f"📄 Read tag content: {text}")
-                    handle_tag(text)
-                else:
-                    logging.info("🆕 Empty tag – writing current context...")
-                    t, i = get_current_context()
-                    if t and i:
-                        json_str = json.dumps({"t": t, "i": i})
-                        reader.write_no_block(json_str)
-                        logging.info(f"📝 Wrote tag: {json_str}")
+            if text:
+                if mode == "delete":
+                    if text:
+                        logging.info(f"🗑 Tag will be deleted (content: {text})")
+                        reader.write_no_block("")  # clear tag
+                        logging.info("✅ Tag erased.")
                     else:
-                        logging.warning("⚠️ No valid context to write.")
-
+                        logging.info("💡 Tag already empty.")
+                else:
+                    if text:
+                        logging.info(f"📄 Read tag content: {text}")
+                        handle_tag(text)
+                    else:
+                        logging.info("🆕 Empty tag – writing current context...")
+                        t, i = get_current_context()
+                        if t and i:
+                            json_str = json.dumps({"t": t, "i": i})
+                            reader.write_no_block(json_str)
+                            logging.info(f"📝 Wrote tag: {json_str}")
+                        else:
+                            logging.warning("⚠️ No valid context to write.")
+            else:
+                logging.debig("⚠️ No valid context read.")
+                
             time.sleep(1)
     finally:
         GPIO.cleanup()
