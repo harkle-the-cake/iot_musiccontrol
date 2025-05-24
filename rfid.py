@@ -20,17 +20,6 @@ logging.basicConfig(
     format="%(asctime)s [%(levelname)s] %(message)s",
 )
 
-config = load_config()
-sp = spotipy.Spotify(auth_manager=SpotifyOAuth(
-    client_id=config.get("client_id"),
-    client_secret=config.get("client_secret"),
-    redirect_uri=config.get("redirect_uri"),
-    scope="user-read-playback-state user-modify-playback-state user-read-private user-read-email",
-    cache_path=Path(__file__).resolve().parent / ".spotify_cache",
-    open_browser=False
-))
-
-
 reader = SimpleMFRC522()
 
 type_map = {
@@ -152,6 +141,17 @@ def main():
             time.sleep(2)
     finally:
         GPIO.cleanup()
+
+
+config = load_config()
+sp = spotipy.Spotify(auth_manager=SpotifyOAuth(
+    client_id=config.get("client_id"),
+    client_secret=config.get("client_secret"),
+    redirect_uri=config.get("redirect_uri"),
+    scope="user-read-playback-state user-modify-playback-state user-read-private user-read-email",
+    cache_path=Path(__file__).resolve().parent / ".spotify_cache",
+    open_browser=False
+))
 
 if __name__ == "__main__":
     main()
