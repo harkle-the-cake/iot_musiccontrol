@@ -99,7 +99,8 @@ def save_conf():
         "client_secret": request.form.get("client_secret", ""),
         "redirect_uri": request.form.get("redirect_uri", ""),
         "rotation": int(request.form.get("rotation", 0)),
-        "displayMode": request.form.get("displayMode", "device")
+        "displayMode": request.form.get("displayMode", "auto"),
+        "rfidMode": request.form.get("rfidMode", "auto")
     }
     save_config(config)
     return redirect(url_for("index"))

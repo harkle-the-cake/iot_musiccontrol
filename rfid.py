@@ -1,49 +1,18 @@
 #!/usr/bin/env python3
 # -*- coding: UTF-8 -*-
-import argparse
-import os
-import sys
-import time
+
 import logging
-import requests
-import io
+import time
+import json
+from pathlib import Path
+import os
+import RPi.GPIO as GPIO
+from mfrc522 import SimpleMFRC522
 import spotipy
 from spotipy.oauth2 import SpotifyOAuth
-from PIL import Image
-import spidev as SPI
-from pathlib import Path
 from dotenv import load_dotenv
 
-# Argument parsing
-parser = argparse.ArgumentParser(description="Spotify Cover Display")
-parser.add_argument("--once", "-o", action="store_true", help="Run once for authentication and exit")
-args = parser.parse_args()
-
-# Load environment variables from .env file
-load_dotenv(dotenv_path=Path(__file__).resolve().parent / ".env")
-
 cache_path = Path(__file__).resolve().parent / ".spotify_cache"
-
-# Import display library (adjust if needed)
-from libs import LCD_1inch3
-
-# Read Spotify credentials from environment
-client_id = os.getenv("SPOTIFY_CLIENT_ID")
-client_secret = os.getenv("SPOTIFY_CLIENT_SECRET")
-
-if not client_id or not client_secret:
-    raise ValueError("❌ Missing SPOTIFY_CLIENT_ID or SPOTIFY_CLIENT_SECRET in environment!")
-
-if not (Path(__file__).resolve().parent / "static/images/default.jpg").exists():
-    raise FileNotFoundError("⚠️ Default image not found: static/images/default.jpg")
-
-
-# GPIO pin configuration
-RST = 27
-DC = 25
-BL = 18
-bus = 0
-device = 0
 
 # Set up logging
 logging.basicConfig(
@@ -51,79 +20,105 @@ logging.basicConfig(
     format="%(asctime)s [%(levelname)s] %(message)s",
 )
 
-# Initialize display
-disp = LCD_1inch3.LCD_1inch3(
-    spi=SPI.SpiDev(bus, device),
-    spi_freq=10000000,
-    rst=RST,
-    dc=DC,
-    bl=BL
-)
-disp.Init()
-disp.clear()
-
-# Initialize Spotify API authentication
+config = load_config()
 sp = spotipy.Spotify(auth_manager=SpotifyOAuth(
-    client_id=client_id,
-    client_secret=client_secret,
-    redirect_uri="http://127.0.0.1:8888/callback",
-    scope="user-read-playback-state user-read-private user-read-email",
-    cache_path = Path(__file__).resolve().parent / ".spotify_cache",
+    client_id=config.get("client_id"),
+    client_secret=config.get("client_secret"),
+    redirect_uri=config.get("redirect_uri"),
+    scope="user-read-playback-state user-modify-playback-state user-read-private user-read-email",
+    cache_path=Path(__file__).resolve().parent / ".spotify_cache",
     open_browser=False
 ))
 
-last_track_id = None
 
-def mapToImage(device):
-    """Return local image path for a given Spotify device dict."""
-    device_id = device.get('id')
-    device_name = device.get('name', 'unknown').lower().replace(" ", "_")
-    
-    # Load mapping file (can be JSON or just file lookup)
-    images_dir = Path(__file__).resolve().parent / "static" / "images"
-    specific_path = images_dir / f"{device_id}.jpg"
-    fallback_path = images_dir / f"{device_name}.jpg"
-    default_path = images_dir / "default.jpg"
+reader = SimpleMFRC522()
 
-    if specific_path.exists():
-        logging.info(f"🔗 Found image for device ID: {device_id}")
-        return specific_path
-    elif fallback_path.exists():
-        logging.info(f"🔗 Found image for device name: {device_name}")
-        return fallback_path
-    else:
-        logging.warning("🖼 No image found, using default.")
-        return default_path
+type_map = {
+    "a": "album",
+    "p": "playlist",
+    "d": "device",
+    "r": "artist",
+    "b": "audiobook"
+}
 
-def show_device(image_path):
-    """Load and show image from given path."""
-    try:
-        image = Image.open(image_path).convert("RGB")
-        image = image.resize((disp.width, disp.height))
-        disp.ShowImage(image)
-    except Exception as e:
-        logging.error(f"Failed to load or display device image: {e}")
-
-def process_once():
-    """Fetch current track and show cover once."""
+def get_current_context():
     try:
         playback = sp.current_playback()
-        if playback and playback.get('device'):
-            device = playback['device']
-            logging.info(f"🎵 Now playing on device: {device.get('name', 'Unknown')} ({device.get('id', 'no-id')})")
-            image_url = mapToImage(device)
-            show_device(image_url)
-        else:
-            logging.warning("⏸ No track playing or playback data available.")
+        context = playback.get("context") if playback else None
+        if context and context.get("type") in type_map.values():
+            short_type = [k for k, v in type_map.items() if v == context["type"]][0]
+            return short_type, context["uri"].split(":")[-1]
     except Exception as e:
-        logging.error(f"Error while querying Spotify playback: {e}")
+        logging.error(f"🔍 Failed to fetch current playback: {e}")
+    return None, None
 
-if args.once:
-    logging.info("▶️ Run-once mode activated (for initial Spotify login).")
-    process_once()
-    sys.exit(0)
+def handle_tag(tag_json):
+    # check current playback context
+    try:
+        playback = sp.current_playback()
+        current_type = None
+        current_id = None
+        if playback and playback.get("context"):
+            uri = playback["context"].get("uri", "")
+            parts = uri.split(":")
+            if len(parts) >= 3:
+                current_type = parts[1]
+                current_id = parts[2]
+    except Exception as e:
+        logging.warning(f"⚠️ Cannot determine current context: {e}")
+        try:
+        data = json.loads(tag_json)
+        t, i = data.get("t"), data.get("i")
+        if not t or not i:
+            raise ValueError("Invalid tag structure")
 
-# Normal loop mode
-while True:
-    process_once()
-    time.sleep(5)
+        logging.info(f"🎯 Tag: type={t}, id={i}")
+        mapped_type = type_map.get(t)
+        logging.info(f"🎯 current Tag: type={mapped_type}, id={i}")
+        logging.info(f"🎯 Spotify context: type={current_type}, id={current_id}")
+        if mapped_type == current_type and current_id == i:
+            logging.info("🔁 Tag matches current playback – nothing to change.")
+            return
+
+        if t == "p":
+            sp.start_playback(context_uri=f"spotify:playlist:{i}")
+        elif t == "a":
+            sp.start_playback(context_uri=f"spotify:album:{i}")
+        elif t == "b":
+            sp.start_playback(context_uri=f"spotify:audiobook:{i}")
+        elif t == "r":
+            top_tracks = sp.artist_top_tracks(i, country="DE")
+            uris = [track["uri"] for track in top_tracks["tracks"]]
+            if uris:
+                sp.start_playback(uris=uris)
+        elif t == "d":
+            sp.transfer_playback(i, force_play=True)
+        else:
+            logging.warning("❓ Unknown tag type.")
+    except Exception as e:
+        logging.error(f"❌ Failed to interpret tag: {e}")
+
+def main():
+    try:
+        while True:
+            logging.info("📡 Waiting for RFID tag...")
+            id, text = reader.read()
+            text = text.strip()
+            if text:
+                logging.info(f"📄 Read tag content: {text}")
+                handle_tag(text)
+            else:
+                logging.info("🆕 Empty tag – writing current context...")
+                t, i = get_current_context()
+                if t and i:
+                    json_str = json.dumps({"t": t, "i": i})
+                    reader.write_no_block(json_str)
+                    logging.info(f"📝 Wrote tag: {json_str}")
+                else:
+                    logging.warning("⚠️ No valid context to write.")
+            time.sleep(2)
+    finally:
+        GPIO.cleanup()
+
+if __name__ == "__main__":
+    main()
