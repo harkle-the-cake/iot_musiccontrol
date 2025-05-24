@@ -41,16 +41,28 @@ type_map = {
     "b": "audiobook"
 }
 
-def get_current_context():
+def get_current_context(mode="auto"):
     try:
         playback = sp.current_playback()
         context = playback.get("context") if playback else None
-        if context and context.get("type") in type_map.values():
-            short_type = [k for k, v in type_map.items() if v == context["type"]][0]
-            return short_type, context["uri"].split(":")[-1]
+
+        if not playback or (mode == "auto" and not context):
+            return None, None
+
+        if mode == "auto":
+            if context and context.get("type") in type_map.values():
+                short_type = [k for k, v in type_map.items() if v == context["type"]][0]
+                return short_type, context["uri"].split(":")[-1]
+            return None, None
+        else:
+            # fixed mode – write that type regardless of context type
+            if context:
+                return mode[0], context["uri"].split(":")[-1]
+            else:
+                return None, None
     except Exception as e:
         logging.error(f"🔍 Failed to fetch current playback: {e}")
-    return None, None
+        return None, None
 
 def handle_tag(tag_json):
     # check current playback context
@@ -98,24 +110,45 @@ def handle_tag(tag_json):
     except Exception as e:
         logging.error(f"❌ Failed to interpret tag: {e}")
 
+def load_config():
+    config_path = Path(__file__).resolve().parent / "config.json"
+    if config_path.exists():
+        import json
+        with open(config_path) as f:
+            return json.load(f)
+    return {}
+
 def main():
     try:
+        config = load_config()
+        mode = config.get("rfidMode", "auto")
+
         while True:
             logging.info("📡 Waiting for RFID tag...")
             id, text = reader.read()
             text = text.strip()
-            if text:
-                logging.info(f"📄 Read tag content: {text}")
-                handle_tag(text)
-            else:
-                logging.info("🆕 Empty tag – writing current context...")
-                t, i = get_current_context()
-                if t and i:
-                    json_str = json.dumps({"t": t, "i": i})
-                    reader.write_no_block(json_str)
-                    logging.info(f"📝 Wrote tag: {json_str}")
+
+            if mode == "delete":
+                if text:
+                    logging.info(f"🗑 Tag will be deleted (content: {text})")
+                    reader.write_no_block("")  # clear tag
+                    logging.info("✅ Tag erased.")
                 else:
-                    logging.warning("⚠️ No valid context to write.")
+                    logging.info("💡 Tag already empty.")
+            else:
+                if text:
+                    logging.info(f"📄 Read tag content: {text}")
+                    handle_tag(text)
+                else:
+                    logging.info("🆕 Empty tag – writing current context...")
+                    t, i = get_current_context()
+                    if t and i:
+                        json_str = json.dumps({"t": t, "i": i})
+                        reader.write_no_block(json_str)
+                        logging.info(f"📝 Wrote tag: {json_str}")
+                    else:
+                        logging.warning("⚠️ No valid context to write.")
+
             time.sleep(2)
     finally:
         GPIO.cleanup()
