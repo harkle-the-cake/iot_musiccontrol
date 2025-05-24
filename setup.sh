@@ -42,7 +42,7 @@ sudo apt install -y python3 python3-pip libjpeg-dev libopenjp2-7 libopenblas0 \
 sudo apt autoremove
 
 # 2. Spotipy (nur über pip verfügbar)
-pip3 install --no-cache-dir spotipy python-dotenv json --break-system-packages
+pip3 install --no-cache-dir spotipy python-dotenv --break-system-packages
 
 # 3. create certs
 cd iot_musiccontrol/
