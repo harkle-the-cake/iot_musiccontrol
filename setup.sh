@@ -40,6 +40,7 @@ sudo apt install -y python3 python3-pip libjpeg-dev libopenjp2-7 libopenblas0 \
 sudo apt autoremove
 
 # Spotipy (nur über pip verfügbar)
+python3 -m pip install --upgrade pip
 pip3 install --no-cache-dir spotipy python-dotenv --break-system-packages
 
 # create certs
@@ -48,6 +49,7 @@ mkdir certs && cd certs/
 openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout rpi.key -out rpi.crt
 
 # Install and start systemd service
+cd ~/iot_musiccontrol/
 echo "🛠️ Installing systemd service for the display..."
 sudo cp "$SERVICE_NAME" "$SERVICE_PATH"
 
