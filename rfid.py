@@ -116,8 +116,8 @@ def main():
         while True:
             logging.info("📡 Waiting for RFID tag...")
             id, text = reader.read_no_block()
-            text = text.strip()
             if text:
+                text = text.strip()
                 if mode == "delete":
                     if text:
                         logging.info(f"🗑 Tag will be deleted (content: {text})")
