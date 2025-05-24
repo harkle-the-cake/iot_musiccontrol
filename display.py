@@ -146,12 +146,7 @@ def process_once():
                     raise Exception("No images in playlist")
             except Exception as e:
                 logging.warning(f"⚠️ Fehler beim Playlist-Aufruf: {e}")
-                item = playback.get("item")
-                track_images = item.get("album", {}).get("images", []) if item else []
-                if track_images:
-                    show_image_from_url(track_images[0]["url"])
-                else:
-                    show_local_fallback("default_playlist.jpg")
+                show_local_fallback("default_playlist.jpg")
 
         elif mode == "artist":
             try:
@@ -165,12 +160,7 @@ def process_once():
                     raise Exception("No artist image")
             except Exception as e:
                 logging.warning(f"⚠️ Fehler beim Artist-Aufruf: {e}")
-                item = playback.get("item")
-                track_images = item.get("album", {}).get("images", []) if item else []
-                if track_images:
-                    show_image_from_url(track_images[0]["url"])
-                else:
-                    show_local_fallback("default_artist.jpg")
+                show_local_fallback("default_artist.jpg")
 
         else:
             logging.warning(f"❓ Unbekannter Modus: {mode}")
