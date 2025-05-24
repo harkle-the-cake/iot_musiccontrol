@@ -7,7 +7,7 @@ import json
 from pathlib import Path
 import os
 import RPi.GPIO as GPIO
-from mfrc522 import SimpleMFRC522
+from libs.SimpleMFRC522Device2 import SimpleMFRC522Device2
 import spotipy
 from spotipy.oauth2 import SpotifyOAuth
 from dotenv import load_dotenv
@@ -20,7 +20,7 @@ logging.basicConfig(
     format="%(asctime)s [%(levelname)s] %(message)s",
 )
 
-reader = SimpleMFRC522()
+reader = SimpleMFRC522Device2()
 
 type_map = {
     "a": "album",
@@ -139,7 +139,7 @@ def main():
                     else:
                         logging.warning("⚠️ No valid context to write.")
 
-            time.sleep(2)
+            time.sleep(1)
     finally:
         GPIO.cleanup()
 
