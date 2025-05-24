@@ -16,7 +16,7 @@ cache_path = Path(__file__).resolve().parent / ".spotify_cache"
 
 # Set up logging
 logging.basicConfig(
-    level=logging.INFO,
+    level=logging.DEBUG,
     format="%(asctime)s [%(levelname)s] %(message)s",
 )
 
@@ -139,7 +139,7 @@ def main():
                         else:
                             logging.warning("⚠️ No valid context to write.")
             else:
-                logging.debig("⚠️ No valid context read.")
+                logging.debug("⚠️ No valid context read.")
                 
             time.sleep(1)
     finally:
