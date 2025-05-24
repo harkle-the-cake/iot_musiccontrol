@@ -85,7 +85,7 @@ def index():
                     device_name = d.get("name", "Unnamed")
                     image_path = IMAGE_DIR / f"{device_id}.jpg"
                     d["image_url"] = url_for('static', filename=f"images/{device_id}.jpg") if image_path.exists() \
-                                     else url_for('static', filename="images/default.jpg")
+                                     else url_for('static', filename="images/default_device.jpg")
                     d["name"] = device_name
             except Exception as e:
                 devices = []
