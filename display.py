@@ -58,15 +58,6 @@ def mapToImage(device):
         logging.warning("🖼 No image found, using default.")
         return default_path
 
-def show_device(image_path):
-    """Load and show image from given path."""
-    try:
-        image = Image.open(image_path).convert("RGB")
-        image = image.resize((disp.width, disp.height))
-        disp.ShowImage(image)
-    except Exception as e:
-        logging.error(f"Failed to load or display device image: {e}")
-
 # Konfiguration laden
 def load_config():
     config_path = Path(__file__).resolve().parent / "config.json"
@@ -76,12 +67,30 @@ def load_config():
             return json.load(f)
     return {"mode": "device"}
 
+
+def show_device(image_path):
+    try:
+        from PIL import Image
+        image = Image.open(image_path).convert("RGB")
+        config = load_config()
+        rotation = int(config.get("rotation", 0))
+        if rotation != 0:
+            image = image.rotate(rotation, expand=True)
+        image = image.resize((disp.width, disp.height))
+        disp.ShowImage(image)
+    except Exception as e:
+        logging.error(f"Failed to load or display device image: {e}")
+
 def show_image_from_url(url):
     try:
         import requests, io
         from PIL import Image
         response = requests.get(url)
         image = Image.open(io.BytesIO(response.content)).convert("RGB")
+        config = load_config()
+        rotation = int(config.get("rotation", 0))
+        if rotation != 0:
+            image = image.rotate(rotation, expand=True)
         image = image.resize((disp.width, disp.height))
         disp.ShowImage(image)
     except Exception as e:
