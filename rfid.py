@@ -62,8 +62,11 @@ def handle_tag_or_write(text, display_mode):
         t, i = get_current_context(display_mode)
         if t and i:
             json_str = json.dumps({"t": t, "i": i})
-            reader.write_no_block(json_str)
-            logging.info(f"📝 Geschrieben: {json_str}")
+            id, written_text = reader.write_no_block(json_str)
+            if id:
+                logging.info(f"📝 Schreibvorgang erfolgreich – ID: {id}, Text: {written_text}")
+            else:
+                logging.error("❌ Schreibvorgang fehlgeschlagen – kein Tag beschrieben.")
         else:
             logging.warning("⚠️ Kein gültiger Kontext vorhanden – nichts geschrieben.")
         return
