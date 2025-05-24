@@ -79,36 +79,36 @@ def handle_tag(tag_json):
     except Exception as e:
         logging.warning(f"⚠️ Cannot determine current context: {e}")
         try:
-        data = json.loads(tag_json)
-        t, i = data.get("t"), data.get("i")
-        if not t or not i:
-            raise ValueError("Invalid tag structure")
+            data = json.loads(tag_json)
+            t, i = data.get("t"), data.get("i")
+            if not t or not i:
+                raise ValueError("Invalid tag structure")
 
-        logging.info(f"🎯 Tag: type={t}, id={i}")
-        mapped_type = type_map.get(t)
-        logging.info(f"🎯 current Tag: type={mapped_type}, id={i}")
-        logging.info(f"🎯 Spotify context: type={current_type}, id={current_id}")
-        if mapped_type == current_type and current_id == i:
-            logging.info("🔁 Tag matches current playback – nothing to change.")
-            return
+            logging.info(f"🎯 Tag: type={t}, id={i}")
+            mapped_type = type_map.get(t)
+            logging.info(f"🎯 current Tag: type={mapped_type}, id={i}")
+            logging.info(f"🎯 Spotify context: type={current_type}, id={current_id}")
+            if mapped_type == current_type and current_id == i:
+                logging.info("🔁 Tag matches current playback – nothing to change.")
+                return
 
-        if t == "p":
-            sp.start_playback(context_uri=f"spotify:playlist:{i}")
-        elif t == "a":
-            sp.start_playback(context_uri=f"spotify:album:{i}")
-        elif t == "b":
-            sp.start_playback(context_uri=f"spotify:audiobook:{i}")
-        elif t == "r":
-            top_tracks = sp.artist_top_tracks(i, country="DE")
-            uris = [track["uri"] for track in top_tracks["tracks"]]
-            if uris:
-                sp.start_playback(uris=uris)
-        elif t == "d":
-            sp.transfer_playback(i, force_play=True)
-        else:
-            logging.warning("❓ Unknown tag type.")
-    except Exception as e:
-        logging.error(f"❌ Failed to interpret tag: {e}")
+            if t == "p":
+                sp.start_playback(context_uri=f"spotify:playlist:{i}")
+            elif t == "a":
+                sp.start_playback(context_uri=f"spotify:album:{i}")
+            elif t == "b":
+                sp.start_playback(context_uri=f"spotify:audiobook:{i}")
+            elif t == "r":
+                top_tracks = sp.artist_top_tracks(i, country="DE")
+                uris = [track["uri"] for track in top_tracks["tracks"]]
+                if uris:
+                    sp.start_playback(uris=uris)
+            elif t == "d":
+                sp.transfer_playback(i, force_play=True)
+            else:
+                logging.warning("❓ Unknown tag type.")
+        except Exception as e:
+            logging.error(f"❌ Failed to interpret tag: {e}")
 
 def load_config():
     config_path = Path(__file__).resolve().parent / "config.json"
