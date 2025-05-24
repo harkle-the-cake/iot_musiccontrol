@@ -124,20 +124,8 @@ def main():
         while True:
             logging.debug("📡 Waiting for RFID tag...")
             id, text = reader.read_no_block()
-            if text:
-                text = text.strip()
-                if mode == "delete":
-                    if text:
-                        logging.info(f"🗑 Tag will be deleted (content: {text})")
-                        reader.write_no_block("")  # clear tag
-                        logging.info("✅ Tag erased.")
-                    else:
-                        logging.info("💡 Tag already empty.")
-                else:
-                    if text:
-                        logging.info(f"📄 Read tag content: {text}")
-                    
-                    handle_tag_or_write(text)
+            if text:                
+                handle_tag_or_write(text, mode)
             else:
                 logging.debug("⚠️ No valid context read.")
                 
