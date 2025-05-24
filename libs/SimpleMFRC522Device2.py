@@ -63,25 +63,38 @@ class SimpleMFRC522Device2:
       return id, text_in
 
   def write_no_block(self, text):
-      (status, TagType) = self.READER.MFRC522_Request(self.READER.PICC_REQIDL)
-      if status != self.READER.MI_OK:
-          return None, None
-      (status, uid) = self.READER.MFRC522_Anticoll()
-      if status != self.READER.MI_OK:
-          return None, None
-      id = self.uid_to_num(uid)
-      self.READER.MFRC522_SelectTag(uid)
-      status = self.READER.MFRC522_Auth(self.READER.PICC_AUTHENT1A, 11, self.KEY, uid)
-      self.READER.MFRC522_Read(11)
-      if status == self.READER.MI_OK:
-          data = bytearray()
-          data.extend(bytearray(text.ljust(len(self.BLOCK_ADDRS) * 16).encode('ascii')))
-          i = 0
-          for block_num in self.BLOCK_ADDRS:
-            self.READER.MFRC522_Write(block_num, data[(i*16):(i+1)*16])
-            i += 1
-      self.READER.MFRC522_StopCrypto1()
-      return id, text[0:(len(self.BLOCK_ADDRS) * 16)]
+    (status, TagType) = self.READER.MFRC522_Request(self.READER.PICC_REQIDL)
+    if status != self.READER.MI_OK:
+        return None, None
+
+    (status, uid) = self.READER.MFRC522_Anticoll()
+    if status != self.READER.MI_OK:
+        return None, None
+
+    id = self.uid_to_num(uid)
+    self.READER.MFRC522_SelectTag(uid)
+    status = self.READER.MFRC522_Auth(self.READER.PICC_AUTHENT1A, 11, self.KEY, uid)
+
+    if status != self.READER.MI_OK:
+        print("❌ Authentifizierung fehlgeschlagen.")
+        self.READER.MFRC522_StopCrypto1()
+        return None, None
+
+    # Daten vorbereiten
+    full_text = text.ljust(len(self.BLOCK_ADDRS) * 16)
+    data = bytearray(full_text.encode("ascii"))
+
+    for i, block_num in enumerate(self.BLOCK_ADDRS):
+        chunk = data[i*16:(i+1)*16]
+        write_status = self.READER.MFRC522_Write(block_num, list(chunk))
+        if write_status != self.READER.MI_OK:
+            print(f"❌ Schreibfehler in Block {block_num}")
+            self.READER.MFRC522_StopCrypto1()
+            return None, None
+
+    self.READER.MFRC522_StopCrypto1()
+    return id, full_text.strip()
+
 
   def uid_to_num(self, uid):
       n = 0
