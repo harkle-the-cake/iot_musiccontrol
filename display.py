@@ -98,7 +98,7 @@ def show_local_fallback(image_name):
 def process_once():
     config = load_config()
     mode = config.get("displayMode", "device")
-
+    initialMode = mode
     try:
         playback = sp.current_playback()
         if not playback:
@@ -146,7 +146,14 @@ def process_once():
                     raise Exception("No images in playlist")
             except Exception as e:
                 logging.warning(f"⚠️ Fehler beim Playlist-Aufruf: {e}")
-                show_local_fallback("default_playlist.jpg")
+                if initialMode == "auto":    
+                    item = playback.get("item")
+                    if track_images:
+                        show_image_from_url(track_images[0]["url"])
+                    else:
+                        show_local_fallback("default_playlist.jpg")
+                else:
+                    show_local_fallback("default_playlist.jpg")
 
         elif mode == "artist":
             try:
@@ -160,7 +167,15 @@ def process_once():
                     raise Exception("No artist image")
             except Exception as e:
                 logging.warning(f"⚠️ Fehler beim Artist-Aufruf: {e}")
-                show_local_fallback("default_artist.jpg")
+                if initialMode == "auto":                    
+                    item = playback.get("item")
+                    track_images = item.get("album", {}).get("images", []) if item else []
+                    if track_images:
+                        show_image_from_url(track_images[0]["url"])
+                    else:
+                        show_local_fallback("default_artist.jpg")
+                else:
+                    show_local_fallback("default_artist.jpg")
 
         else:
             logging.warning(f"❓ Unbekannter Modus: {mode}")
