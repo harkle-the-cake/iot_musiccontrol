@@ -53,9 +53,19 @@ def get_current_context(mode="auto"):
         logging.error(f"🔍 Failed to fetch current playback: {e}")
         return None, None
 
-def handle_tag(text):
-    if not text or not text.strip():
-        logging.warning("🚫 RFID-Tag enthält keinen Text.")
+def is_effectively_empty(text):
+    return not text or all(c in (' ', '\x00', '\n', '\r', '\t') for c in text)
+
+def handle_tag_or_write(text, display_mode):
+    if is_effectively_empty(text):
+        logging.info("🆕 Tag scheint leer zu sein – versuche aktuellen Kontext zu schreiben.")
+        t, i = get_current_context(display_mode)
+        if t and i:
+            json_str = json.dumps({"t": t, "i": i})
+            reader.write_no_block(json_str)
+            logging.info(f"📝 Geschrieben: {json_str}")
+        else:
+            logging.warning("⚠️ Kein gültiger Kontext vorhanden – nichts geschrieben.")
         return
 
     logging.debug(f"📄 Gelesener Tag-Inhalt (roh): {repr(text)}")
@@ -126,16 +136,8 @@ def main():
                 else:
                     if text:
                         logging.info(f"📄 Read tag content: {text}")
-                        handle_tag(text)
-                    else:
-                        logging.info("🆕 Empty tag – writing current context...")
-                        t, i = get_current_context()
-                        if t and i:
-                            json_str = json.dumps({"t": t, "i": i})
-                            reader.write_no_block(json_str)
-                            logging.info(f"📝 Wrote tag: {json_str}")
-                        else:
-                            logging.warning("⚠️ No valid context to write.")
+                    
+                    handle_tag_or_write(text)
             else:
                 logging.debug("⚠️ No valid context read.")
                 
