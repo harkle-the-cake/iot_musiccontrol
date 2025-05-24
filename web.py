@@ -67,19 +67,12 @@ def index():
         spotify_status["message"] = error
     elif sp:
         try:
-            playback = sp.current_playback()
-            if playback:
+            me = sp.me()
+            if me:
                 spotify_status["ok"] = True
-                item = playback.get("item")
-                if item:
-                    artist = item['artists'][0]['name']
-                    name = item['name']
-                    spotify_status["track"] = f"{artist} – {name}"
-                else:
-                    spotify_status["track"] = "🎵 Keine Wiedergabe"
                 spotify_status["message"] = "✅ Verbunden"
             else:
-                spotify_status["message"] = "🔇 Keine Wiedergabe"
+                spotify_status["message"] = "🔇 Nicht verbunden"
         except Exception as e:
             spotify_status["message"] = f"❌ Fehler beim Abrufen: {e}"
 
