@@ -1,6 +1,6 @@
 # Code by Simon Monk https://github.com/simonmonk/
 
-import . from MFRC522
+from . import MFRC522
 import RPi.GPIO as GPIO
 
 class SimpleMFRC522Device2:
