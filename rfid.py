@@ -53,35 +53,33 @@ def get_current_context(mode="auto"):
         logging.error(f"🔍 Failed to fetch current playback: {e}")
         return None, None
 
-def handle_tag(tag_json):
-    # check current playback context
-    try:
-        playback = sp.current_playback()
-        current_type = None
-        current_id = None
-        if playback and playback.get("context"):
-            uri = playback["context"].get("uri", "")
-            parts = uri.split(":")
-            if len(parts) >= 3:
-                current_type = parts[1]
-                current_id = parts[2]
-    except Exception as e:
-        logging.warning(f"⚠️ Cannot determine current context: {e}")
-        
-    try:
-        data = json.loads(tag_json)
-        t, i = data.get("t"), data.get("i")
-        if not t or not i:
-            raise ValueError("Invalid tag structure")
+def handle_tag(text):
+    if not text or not text.strip():
+        logging.warning("🚫 RFID-Tag enthält keinen Text.")
+        return
 
-        logging.info(f"🎯 Tag: type={t}, id={i}")
-        mapped_type = type_map.get(t)
-        logging.info(f"🎯 current Tag: type={mapped_type}, id={i}")
-        logging.info(f"🎯 Spotify context: type={current_type}, id={current_id}")
-        if mapped_type == current_type and current_id == i:
-            logging.info("🔁 Tag matches current playback – nothing to change.")
-            return
+    logging.debug(f"📄 Gelesener Tag-Inhalt (roh): {repr(text)}")
 
+    try:
+        data = json.loads(text.strip())
+    except json.JSONDecodeError as e:
+        logging.error(f"❌ Tag-Inhalt ist kein gültiges JSON: {e}")
+        return
+
+    t = data.get("t")
+    i = data.get("i")
+
+    if not t or not i:
+        logging.warning(f"⚠️ Ungültige Struktur: {data}")
+        return
+
+    logging.info(f"🎯 Tag: type={t}, id={i}")
+    mapped_type = type_map.get(t)
+    if not mapped_type:
+        logging.warning(f"❓ Unbekannter Typ in Tag: {t}")
+        return
+
+    try:
         if t == "p":
             sp.start_playback(context_uri=f"spotify:playlist:{i}")
         elif t == "a":
@@ -96,9 +94,9 @@ def handle_tag(tag_json):
         elif t == "d":
             sp.transfer_playback(i, force_play=True)
         else:
-            logging.warning("❓ Unknown tag type.")
+            logging.warning(f"⚠️ Kein unterstützter Tag-Typ: {t}")
     except Exception as e:
-        logging.error(f"❌ Failed to interpret tag: {e}")
+        logging.error(f"❌ Fehler bei Spotify-Aktion: {e}")
 
 def load_config():
     config_path = Path(__file__).resolve().parent / "config.json"
