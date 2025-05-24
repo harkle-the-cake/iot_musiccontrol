@@ -87,6 +87,14 @@ def show_image_from_url(url):
     except Exception as e:
         logging.error(f"Failed to load image from URL: {e}")
 
+def show_local_fallback(image_name):
+    fallback_path = Path(__file__).resolve().parent / "static/images" / image_name
+    if fallback_path.exists():
+        show_device(fallback_path)
+        logging.info(f"🖼 Fallback-Bild angezeigt: {image_name}")
+    else:
+        logging.warning(f"❌ Kein Fallback-Bild gefunden: {image_name}")
+
 def process_once():
     config = load_config()
     mode = config.get("displayMode", "device")
@@ -95,6 +103,7 @@ def process_once():
         playback = sp.current_playback()
         if not playback:
             logging.warning("⏸ No playback available.")
+            show_local_fallback("no_image.jpg")
             return
 
         context = playback.get("context", {})
@@ -102,16 +111,12 @@ def process_once():
         uri = context.get("uri", "")
 
         if mode == "delete":
-            delete_image = Path(__file__).resolve().parent / "static/images/delete.jpg"
-            if delete_image.exists():
-                show_device(delete_image)
-            else:
-                logging.warning("🗑 Kein delete.jpg gefunden.")
+            show_local_fallback("delete.jpg")
             return
 
         if mode == "auto":
             if context_type:
-                mode = context_type  # automatisch übernehmen
+                mode = context_type
 
         if mode == "device":
             device = playback.get("device")
@@ -119,12 +124,16 @@ def process_once():
                 image_path = mapToImage(device)
                 show_device(image_path)
             else:
-                logging.warning("🔌 No device info.")
+                show_local_fallback("default_device.jpg")
+
         elif mode == "album":
             item = playback.get("item")
             images = item.get("album", {}).get("images", []) if item else []
             if images:
                 show_image_from_url(images[0]["url"])
+            else:
+                show_local_fallback("default_album.jpg")
+
         elif mode == "playlist":
             try:
                 playlist_id = uri.split(":")[-1]
@@ -135,11 +144,14 @@ def process_once():
                 else:
                     raise Exception("No images in playlist")
             except Exception as e:
-                logging.warning(f"⚠️ Fehler beim Playlist-Fallback: {e}")
+                logging.warning(f"⚠️ Fehler beim Playlist-Aufruf: {e}")
                 item = playback.get("item")
                 track_images = item.get("album", {}).get("images", []) if item else []
                 if track_images:
                     show_image_from_url(track_images[0]["url"])
+                else:
+                    show_local_fallback("default_playlist.jpg")
+
         elif mode == "artist":
             try:
                 artist_id = uri.split(":")[-1]
@@ -147,17 +159,24 @@ def process_once():
                 images = artist.get("images", [])
                 if images:
                     show_image_from_url(images[0]["url"])
+                else:
+                    raise Exception("No artist image")
             except Exception as e:
-                logging.warning(f"⚠️ Fehler beim Artist-Fallback: {e}")
+                logging.warning(f"⚠️ Fehler beim Artist-Aufruf: {e}")
                 item = playback.get("item")
                 track_images = item.get("album", {}).get("images", []) if item else []
                 if track_images:
                     show_image_from_url(track_images[0]["url"])
+                else:
+                    show_local_fallback("default_artist.jpg")
+
         else:
             logging.warning(f"❓ Unbekannter Modus: {mode}")
+            show_local_fallback("mode_unknown.jpg")
 
     except Exception as e:
-        logging.error(f"Error in process_once(): {e}")
+        logging.error(f"❌ Fehler in process_once(): {e}")
+        show_local_fallback("error.jpg")
 
 # Initialize display
 disp = LCD_1inch3.LCD_1inch3(
