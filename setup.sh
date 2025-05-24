@@ -45,7 +45,7 @@ sudo apt autoremove
 pip3 install --no-cache-dir spotipy python-dotenv --break-system-packages
 
 # 3. create certs
-cd iot_musiccontrol/
+cd ~/iot_musiccontrol/
 mkdir certs && cd certs/
 openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout rpi.key -out rpi.crt
 
