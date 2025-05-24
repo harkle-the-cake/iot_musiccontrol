@@ -142,6 +142,7 @@ def process_once():
                 if images:
                     show_image_from_url(images[0]["url"])
                 else:
+                    show_local_fallback("default_playlist.jpg")
                     raise Exception("No images in playlist")
             except Exception as e:
                 logging.warning(f"⚠️ Fehler beim Playlist-Aufruf: {e}")
@@ -160,6 +161,7 @@ def process_once():
                 if images:
                     show_image_from_url(images[0]["url"])
                 else:
+                    show_local_fallback("default_artist.jpg")
                     raise Exception("No artist image")
             except Exception as e:
                 logging.warning(f"⚠️ Fehler beim Artist-Aufruf: {e}")
