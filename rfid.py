@@ -114,7 +114,7 @@ def main():
         mode = config.get("rfidMode", "auto")
 
         while True:
-            logging.info("📡 Waiting for RFID tag...")
+            logging.debug("📡 Waiting for RFID tag...")
             id, text = reader.read_no_block()
             if text:
                 text = text.strip()
