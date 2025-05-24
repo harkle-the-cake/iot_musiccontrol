@@ -58,7 +58,7 @@ def is_effectively_empty(text):
 
 def handle_tag_or_write(text, display_mode):
     if is_effectively_empty(text):
-        logging.info("🆕 Tag scheint leer zu sein – versuche aktuellen Kontext zu schreiben.")
+        logging.info(f"🆕 Tag scheint leer zu sein – versuche aktuellen Kontext zu schreiben. Inhalt: {text}")
         t, i = get_current_context(display_mode)
         if t and i:
             json_str = json.dumps({"t": t, "i": i})
