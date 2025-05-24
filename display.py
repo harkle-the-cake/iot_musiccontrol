@@ -104,6 +104,44 @@ def show_local_fallback(image_name):
     else:
         logging.warning(f"❌ Kein Fallback-Bild gefunden: {image_name}")
 
+def show_artist_image(playback, uri, fallback_mode="default"):
+    try:
+        artist_id = uri.split(":")[-1]
+        artist = sp.artist(artist_id)
+        images = artist.get("images", [])
+        if images:
+            show_image_from_url(images[0]["url"])
+            return True
+    except Exception as e:
+        logging.warning(f"⚠️ Fehler beim direkten Artist-Zugriff: {e}")
+    
+    # Fallback-Suche via aktuellem Track
+    try:
+        track = playback.get("item")
+        if track:
+            artist_name = track["artists"][0]["name"]
+            logging.info(f"🔍 Artist-Fallback-Suche für '{artist_name}'")
+            search_result = sp.search(q=artist_name, type="artist", limit=1)
+            artists = search_result.get("artists", {}).get("items", [])
+            if artists:
+                images = artists[0].get("images", [])
+                if images:
+                    show_image_from_url(images[0]["url"])
+                    return True
+    except Exception as e:
+        logging.warning(f"⚠️ Fehler bei Artist-Suche: {e}")
+
+    # Zusätzlicher Fallback in "auto"-Modus: Albumcover
+    if fallback_mode == "auto":
+        item = playback.get("item")
+        track_images = item.get("album", {}).get("images", []) if item else []
+        if track_images:
+            show_image_from_url(track_images[0]["url"])
+            return True
+
+    show_local_fallback("default_artist.jpg")
+    return False
+
 def process_once():
     config = load_config()
     mode = config.get("displayMode", "device")
@@ -166,26 +204,7 @@ def process_once():
                     show_local_fallback("default_playlist.jpg")
 
         elif mode == "artist":
-            try:
-                artist_id = uri.split(":")[-1]
-                artist = sp.artist(artist_id)
-                images = artist.get("images", [])
-                if images:
-                    show_image_from_url(images[0]["url"])
-                else:
-                    show_local_fallback("default_artist.jpg")
-                    raise Exception("No artist image")
-            except Exception as e:
-                logging.warning(f"⚠️ Fehler beim Artist-Aufruf: {e}")
-                if initialMode == "auto":                    
-                    item = playback.get("item")
-                    track_images = item.get("album", {}).get("images", []) if item else []
-                    if track_images:
-                        show_image_from_url(track_images[0]["url"])
-                    else:
-                        show_local_fallback("default_artist.jpg")
-                else:
-                    show_local_fallback("default_artist.jpg")
+            show_artist_image(playback, uri, fallback_mode="auto" if initialMode == "auto" else "default")
 
         else:
             logging.warning(f"❓ Unbekannter Modus: {mode}")
