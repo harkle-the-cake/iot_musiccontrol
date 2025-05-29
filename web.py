@@ -31,7 +31,8 @@ def load_config():
         "client_secret": "",
         "redirect_uri": "",
         "rotation": 0,
-        "displayMode": "device"
+        "displayMode": "auto",
+        "rfidMode": "auto"
     }
 
 # Konfiguration speichern
