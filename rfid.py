@@ -19,9 +19,6 @@ logging.basicConfig(
     format="%(asctime)s [%(levelname)s] %(message)s",
 )
 
-log = logging.getLogger('werkzeug')
-log.setLevel(logging.WARNING)
-
 # Konfiguration laden
 def load_config():
     config_path = Path(__file__).resolve().parent / "config.json"
