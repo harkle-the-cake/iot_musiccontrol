@@ -37,6 +37,9 @@ logging.basicConfig(
     format="%(asctime)s [%(levelname)s] %(message)s",
 )
 
+logging.getLogger("requests").setLevel(logging.WARNING)
+logging.getLogger("urllib3").setLevel(logging.WARNING)
+
 def get_current_status():
     try:
         r = requests.get("http://127.0.0.1:5055/status", timeout=1)

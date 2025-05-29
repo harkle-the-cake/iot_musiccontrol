@@ -19,6 +19,9 @@ logging.basicConfig(
     format="%(asctime)s [%(levelname)s] %(message)s",
 )
 
+logging.getLogger("requests").setLevel(logging.WARNING)
+logging.getLogger("urllib3").setLevel(logging.WARNING)
+
 # Konfiguration laden
 def load_config():
     config_path = Path(__file__).resolve().parent / "config.json"
