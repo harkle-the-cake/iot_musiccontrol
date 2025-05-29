@@ -92,20 +92,88 @@ def show_device(image_path):
     except Exception as e:
         logging.error(f"Failed to load or display device image: {e}")
 
-def show_image_from_url(url):
+def show_image_from_url(url, cache_name=None):
+    import requests, io
+    from PIL import Image
+    from pathlib import Path
+
     try:
-        import requests, io
-        from PIL import Image
-        response = requests.get(url)
-        image = Image.open(io.BytesIO(response.content)).convert("RGB")
         config = load_config()
         rotation = int(config.get("rotation", 0))
+
+        # Cache-Verzeichnis
+        cache_dir = Path(__file__).resolve().parent / "cache"
+        cache_dir.mkdir(parents=True, exist_ok=True)
+
+        # Cache-Dateiname
+        if cache_name:
+            cache_path = cache_dir / f"{cache_name}.jpg"
+        else:
+            # Fallback: nutze gehashte URL als Dateiname
+            import hashlib
+            hashname = hashlib.sha256(url.encode()).hexdigest()
+            cache_path = cache_dir / f"{hashname}.jpg"
+
+        # Lade aus Cache oder von URL
+        if cache_path.exists():
+            logging.debug(f"🖼 Lade Bild aus Cache: {cache_path}")
+            image = Image.open(cache_path)
+        else:
+            logging.debug(f"🌐 Lade Bild von URL: {url}")
+            response = requests.get(url, timeout=5)
+            image = Image.open(io.BytesIO(response.content)).convert("RGB")
+            image.save(cache_path)
+            logging.debug(f"💾 Bild gespeichert unter: {cache_path}")
+
+        # Rotation & Resize
         if rotation != 0:
             image = image.rotate(rotation, expand=True)
         image = image.resize((disp.width, disp.height))
+
+        # Anzeige
         disp.ShowImage(image)
+
     except Exception as e:
-        logging.error(f"Failed to load image from URL: {e}")
+        logging.error(f"❌ Fehler beim Anzeigen des Bildes von URL: {e}")
+
+def cleanup_image_cache(days_old=3):
+    """Löscht Bilddateien aus dem Cache, die älter als `days_old` Tage sind."""
+    cache_dir = Path(__file__).resolve().parent / "cache"
+    if not cache_dir.exists():
+        logging.debug("🧹 Kein Cache-Verzeichnis vorhanden.")
+        return
+
+    now = time.time()
+    cutoff = now - (days_old * 86400)  # 86400 Sekunden pro Tag
+
+    deleted = 0
+    for file in cache_dir.glob("*.jpg"):
+        try:
+            if file.stat().st_mtime < cutoff:
+                file.unlink()
+                logging.info(f"🗑️  Alte Cache-Datei gelöscht: {file.name}")
+                deleted += 1
+        except Exception as e:
+            logging.warning(f"⚠️  Fehler beim Löschen von {file.name}: {e}")
+
+    if deleted > 0:
+        logging.info(f"✅ {deleted} Cache-Datei(en) entfernt.")
+    else:
+        logging.debug("🧼 Keine veralteten Cache-Dateien gefunden.")
+
+def start_cleanup_thread(interval_hours=6, days_old=3):
+    """Startet einen Hintergrund-Thread, der regelmäßig den Cache aufräumt."""
+
+    def run():
+        while True:
+            logging.debug("🧵 Starte Cache-Aufräum-Thread...")
+            cleanup_image_cache(days_old=days_old)
+            logging.debug(f"🕒 Nächster Durchlauf in {interval_hours} Stunden.")
+            time.sleep(interval_hours * 3600)
+
+    t = threading.Thread(target=run, daemon=True)
+    t.start()
+    logging.info(f"🚀 Hintergrund-Thread zum Cache-Aufräumen gestartet (alle {interval_hours}h).")
 
 def show_local_fallback(image_name):
     fallback_path = Path(__file__).resolve().parent / "static/images" / image_name
@@ -278,6 +346,8 @@ sp = spotipy.Spotify(auth_manager=SpotifyOAuth(
     cache_path=Path(__file__).resolve().parent / ".spotify_cache",
     open_browser=False
 ))
+
+start_cleanup_thread(interval_hours=6, days_old=90)
 
 # Normal loop mode
 while True:
