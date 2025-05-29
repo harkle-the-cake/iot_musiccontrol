@@ -17,6 +17,7 @@ from dotenv import load_dotenv
 # Import display library (adjust if needed)
 from libs import LCD_1inch3
 import requests
+import threading
 
 # vars
 code_patch = ""
