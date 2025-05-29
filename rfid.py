@@ -19,6 +19,8 @@ logging.basicConfig(
     format="%(asctime)s [%(levelname)s] %(message)s",
 )
 
+log = logging.getLogger('werkzeug')
+log.setLevel(logging.WARNING)
 
 # Konfiguration laden
 def load_config():
@@ -111,7 +113,6 @@ def main():
         while True:
             id, text = reader.read_tag()
             if not id:
-                update_status("playing")
                 time.sleep(0.5)
                 continue
             
