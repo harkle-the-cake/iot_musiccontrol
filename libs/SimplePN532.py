@@ -14,8 +14,7 @@ class SimplePN532:
         self.start_block = start_block
         self.block_count = block_count  # Standard: 12 Blöcke × 4 Byte = 48 Byte
 
-    def read_tag(self, timeout=0.5):
-        """Liest den Inhalt eines Tags (ASCII) und gibt (UID, Text) zurück."""
+    def read_tag(self, timeout=0.5, strict=False):
         uid = self.pn532.read_passive_target(timeout=timeout)
         if not uid:
             return None, None
@@ -24,8 +23,14 @@ class SimplePN532:
         for i in range(self.block_count):
             block = self.pn532.ntag2xx_read_block(self.start_block + i)
             if block is None:
-                return uid, None
-            data.extend(block)
+                if strict:
+                    return uid, None
+                else:
+                    logging.warning(f"⚠️ Block {self.start_block + i} konnte nicht gelesen werden.")
+                    data.extend(b"\x00\x00\x00\x00")
+            else:
+                data.extend(block)
+
         return uid, data.rstrip(b"\x00").decode("ascii", errors="replace")
 
     def write_tag(self, text, timeout=0.5):
