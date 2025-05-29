@@ -124,11 +124,12 @@ def main():
                 data = json.dumps({"t": t, "i": i})
                 id, ok = reader.write_tag(data)
                 id, text = reader.read_tag()
-                if ok: 
+                if ok == True: 
                     logging.debug(f"📝 Geschrieben: {data}")
                     logging.debug(f"📝 Verifiziert: {text}")
                 else:                    
                     logging.error(f"📝 Daten nicht geschrieben: {data}")
+                    
            time.sleep(1)
     finally:
         GPIO.cleanup()
