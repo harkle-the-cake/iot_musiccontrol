@@ -2,8 +2,15 @@
 
 import board
 import busio
+import logging
 from digitalio import DigitalInOut
 from adafruit_pn532.i2c import PN532_I2C
+
+# Set up logging
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(message)s",
+)
 
 class SimplePN532:
     def __init__(self, start_block=4, block_count=12, debug=False):
