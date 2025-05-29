@@ -160,14 +160,7 @@ def process_once():
             show_local_fallback("no_image.jpg")
             return
 
-        context = playback.get("context", {})
-        
-        if not context:
-            logging.warning("⏸ No context available.")
-            show_local_fallback("no_image.jpg")
-            return
-        
-        context_type = context.get("type", "")
+        context = playback.get("context", {})        
         uri = context.get("uri", "")
 
         if mode == "delete":
@@ -175,6 +168,13 @@ def process_once():
             return
 
         if mode == "auto":
+            context_type = context.get("type", "")
+            
+            if not context:
+                logging.warning("⏸ No context available.")
+                show_local_fallback("no_image.jpg")
+                return
+
             if context_type:
                 mode = context_type
 
