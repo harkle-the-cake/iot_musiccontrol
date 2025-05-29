@@ -153,7 +153,10 @@ def show_artist_image(playback, artistId, fallback_mode="default"):
     show_local_fallback("default_artist.jpg")
     return False
     
-def process_spotify_update():
+def process_spotify_update():    
+    config = load_config()
+    mode = config.get("displayMode", "device")
+    initialMode = mode
     try:
         playback = sp.current_playback()
         if not playback:
@@ -240,9 +243,6 @@ def process_spotify_update():
         show_local_fallback("error.jpg")   
 
 def process_once():
-    config = load_config()
-    mode = config.get("displayMode", "device")
-    initialMode = mode
     status = get_current_status()
     last_spotify_call = 0
     if (status != "playing"):
