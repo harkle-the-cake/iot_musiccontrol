@@ -1,27 +1,55 @@
 #!/usr/bin/env python3
 # -*- coding: UTF-8 -*-
 
-import logging
 import time
 import json
+import logging
 from pathlib import Path
 import os
 import RPi.GPIO as GPIO
-from libs.SimpleMFRC522Device2 import SimpleMFRC522Device2
+from dotenv import load_dotenv
+from libs.SimplePN532 import SimplePN532  # deine angepasste Klasse
 import spotipy
 from spotipy.oauth2 import SpotifyOAuth
-from dotenv import load_dotenv
 
-cache_path = Path(__file__).resolve().parent / ".spotify_cache"
+# Logging setup
+logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 
-# Set up logging
-logging.basicConfig(
-    level=logging.DEBUG,
-    format="%(asctime)s [%(levelname)s] %(message)s",
-)
+# Lade .env
+load_dotenv(dotenv_path=Path(__file__).resolve().parent / ".env")
 
-reader = SimpleMFRC522Device2()
+# Konfiguration laden
+config_path = Path(__file__).resolve().parent / "config.json"
+config = {
+    "mode": "auto",
+    "rotation": 0,
+    "redirect_uri": "http://localhost:8888/callback"
+}
+if config_path.exists():
+    try:
+        with config_path.open() as f:
+            config.update(json.load(f))
+    except Exception as e:
+        logging.warning(f"⚠️ Konnte config.json nicht laden: {e}")
 
+mode = config.get("mode", "auto")
+redirect_uri = config.get("redirect_uri", "http://localhost:8888/callback")
+
+# Spotify auth
+try:
+    sp = spotipy.Spotify(auth_manager=SpotifyOAuth(
+        client_id=os.getenv("SPOTIFY_CLIENT_ID"),
+        client_secret=os.getenv("SPOTIFY_CLIENT_SECRET"),
+        redirect_uri=redirect_uri,
+        scope="user-read-playback-state user-modify-playback-state",
+        cache_path=Path(__file__).resolve().parent / ".spotify_cache",
+        open_browser=False
+    ))
+except Exception as e:
+    logging.error(f"❌ Spotify Auth fehlgeschlagen: {e}")
+    exit(1)
+
+# Tag-Kürzel → Spotify Typ
 type_map = {
     "a": "album",
     "p": "playlist",
@@ -29,70 +57,30 @@ type_map = {
     "r": "artist",
     "b": "audiobook"
 }
+reverse_type_map = {v: k for k, v in type_map.items()}
 
-def get_current_context(mode="auto"):
+reader = SimplePN532()
+
+def get_current_context():
     try:
         playback = sp.current_playback()
         context = playback.get("context") if playback else None
-
-        if not playback or (mode == "auto" and not context):
-            return None, None
-
-        if mode == "auto":
-            if context and context.get("type") in type_map.values():
-                short_type = [k for k, v in type_map.items() if v == context["type"]][0]
-                return short_type, context["uri"].split(":")[-1]
-            return None, None
-        else:
-            # fixed mode – write that type regardless of context type
-            if context:
-                return mode[0], context["uri"].split(":")[-1]
-            else:
-                return None, None
+        if context and context.get("type") in reverse_type_map:
+            short_type = reverse_type_map[context["type"]]
+            return short_type, context["uri"].split(":")[-1]
+        return None, None
     except Exception as e:
-        logging.error(f"🔍 Failed to fetch current playback: {e}")
+        logging.warning(f"⚠️ Konnte Kontext nicht laden: {e}")
         return None, None
 
-def is_effectively_empty(text):
-    return not text or all(c in (' ', '\x00', '\n', '\r', '\t') for c in text)
-
-def handle_tag_or_write(text, display_mode):
-    if is_effectively_empty(text):
-        logging.info(f"🆕 Tag scheint leer zu sein – versuche aktuellen Kontext zu schreiben. Inhalt: '{text}'")
-        t, i = get_current_context(display_mode)
-        if t and i:
-            json_str = json.dumps({"t": t, "i": i})
-            id, written_text = reader.write_no_block(json_str)
-            if id:
-                logging.info(f"📝 Schreibvorgang erfolgreich – ID: {id}, Text: {written_text}")
-            else:
-                logging.error("❌ Schreibvorgang fehlgeschlagen – kein Tag beschrieben.")
-        else:
-            logging.warning("⚠️ Kein gültiger Kontext vorhanden – nichts geschrieben.")
-        return
-
-    logging.debug(f"📄 Gelesener Tag-Inhalt (roh): {repr(text)}")
-
+def handle_existing_tag(tag_data):
     try:
-        data = json.loads(text.strip())
-    except json.JSONDecodeError as e:
-        logging.error(f"❌ Tag-Inhalt ist kein gültiges JSON: {e}")
-        return
-
-    t = data.get("t")
-    i = data.get("i")
-
-    if not t or not i:
-        logging.warning(f"⚠️ Ungültige Struktur: {data}")
-        return
-
-    logging.info(f"🎯 Tag: type={t}, id={i}")
-    mapped_type = type_map.get(t)
-    if not mapped_type:
-        logging.warning(f"❓ Unbekannter Typ in Tag: {t}")
-        return
-
-    try:
+        data = json.loads(tag_data)
+        t = data.get("t")
+        i = data.get("i")
+        if not t or not i:
+            raise ValueError("⚠️ Ungültige Tag-Daten")
+        logging.info(f"🎯 Tag erkannt: Type={t}, ID={i}")
         if t == "p":
             sp.start_playback(context_uri=f"spotify:playlist:{i}")
         elif t == "a":
@@ -107,45 +95,43 @@ def handle_tag_or_write(text, display_mode):
         elif t == "d":
             sp.transfer_playback(i, force_play=True)
         else:
-            logging.warning(f"⚠️ Kein unterstützter Tag-Typ: {t}")
+            logging.warning("❓ Unbekannter Typ im Tag")
     except Exception as e:
-        logging.error(f"❌ Fehler bei Spotify-Aktion: {e}")
-
-def load_config():
-    config_path = Path(__file__).resolve().parent / "config.json"
-    if config_path.exists():
-        import json
-        with open(config_path) as f:
-            return json.load(f)
-    return {}
+        logging.error(f"❌ Fehler bei der Auswertung des Tags: {e}")
 
 def main():
+    logging.info("📡 RFID-Service gestartet...")
     try:
-        config = load_config()
-        mode = config.get("rfidMode", "auto")
-
         while True:
-            logging.debug("📡 Waiting for RFID tag...")
             id, text = reader.read_no_block()
-            if text:                
-                handle_tag_or_write(text, mode)
+            if not id:
+                time.sleep(0.5)
+                continue
+
+            text = text.strip()
+            if mode == "delete":
+                if text:
+                    logging.info(f"🗑 Tag {id} wird gelöscht.")
+                    reader.write("")
+                continue
+
+            if text:
+                logging.info(f"📄 Gelesener Tag: {text}")
+                handle_existing_tag(text)
             else:
-                logging.debug("⚠️ No valid context read.")
-                
+                t, i = get_current_context()
+                if not t or not i:
+                    logging.warning("🚫 Kein gültiger Kontext zum Schreiben")
+                    continue
+                # Bei festem Modus überschreiben
+                if mode in type_map and mode != "auto":
+                    t = reverse_type_map.get(mode, t)
+                data = json.dumps({"t": t, "i": i})
+                reader.write(data)
+                logging.info(f"📝 Geschrieben: {data}")
             time.sleep(1)
     finally:
         GPIO.cleanup()
-
-
-config = load_config()
-sp = spotipy.Spotify(auth_manager=SpotifyOAuth(
-    client_id=config.get("client_id"),
-    client_secret=config.get("client_secret"),
-    redirect_uri=config.get("redirect_uri"),
-    scope="user-read-playback-state user-modify-playback-state user-read-private user-read-email",
-    cache_path=Path(__file__).resolve().parent / ".spotify_cache",
-    open_browser=False
-))
 
 if __name__ == "__main__":
     main()

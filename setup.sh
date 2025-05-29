@@ -37,12 +37,13 @@ sudo apt-get upgrade
 					
 sudo apt install -y python3 python3-pip libjpeg-dev libopenjp2-7 libopenblas0 \
   python3-flask python3-requests python3-numpy python3-pillow python3-dotenv python3-spidev \
+  libusb-dev libpcsclite-dev i2c-tools \
  
 sudo apt autoremove
 
 # Spotipy (nur über pip verfügbar)
 python3 -m pip install --upgrade pip
-pip3 install --no-cache-dir spotipy python-dotenv --break-system-packages
+pip3 install --no-cache-dir spotipy python-dotenv adafruit-circuitpython-pn532 --break-system-packages
 
 # create certs
 cd ~/iot_musiccontrol/
