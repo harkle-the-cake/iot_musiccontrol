@@ -111,9 +111,9 @@ def show_local_fallback(image_name):
     else:
         logging.warning(f"❌ Kein Fallback-Bild gefunden: {image_name}")
 
-def show_artist_image(playback, uri, fallback_mode="default"):
+def show_artist_image(playback, artistId, fallback_mode="default"):
     try:
-        artist_id = uri.split(":")[-1]
+        artist_id = artistId
         artist = sp.artist(artist_id)
         images = artist.get("images", [])
         if images:
@@ -228,9 +228,8 @@ def process_once():
                     show_local_fallback("default_playlist.jpg")
 
         elif mode == "artist":
-            uri = playback.get("href", "")  
-            show_artist_image(playback, uri, fallback_mode="auto" if initialMode == "auto" else "default")
-
+            artistId = playback.get("item").get("album").get("artists")[0].get("id")  
+            show_artist_image(playback, artistId, fallback_mode="auto" if initialMode == "auto" else "default")
         else:
             logging.warning(f"❓ Unbekannter Modus: {mode}")
             show_local_fallback("mode_unknown.jpg")
