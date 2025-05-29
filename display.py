@@ -244,16 +244,19 @@ def process_spotify_update():
 
 def process_once():
     status = get_current_status()
+    
     last_spotify_call = 0
-    if (status != "playing"):
+    
+    while (status != "playing"):
         show_local_fallback(f"{status}.jpg")
+        status = get_current_status()
+    
+    if time.time() - last_spotify_call > 4:
+        logging.debug(f"processing spotify update...")
+        last_spotify_call = time.time()
+        process_spotify_update()
     else:
-        if time.time() - last_spotify_call > 4:
-            logging.debug(f"processing spotify update...")
-            last_spotify_call = time.time()
-            process_spotify_update()
-        else:
-            logging.debug(f"waiting for next processing time...")
+        logging.debug(f"waiting for next processing time...")
 
 # Initialize display
 disp = LCD_1inch3.LCD_1inch3(
