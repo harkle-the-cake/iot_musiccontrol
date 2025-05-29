@@ -126,10 +126,10 @@ def main():
             
             if text:
                 text = text.strip()
-                logging.info(f"📄 Gelesener Tag: {text}")
                 if (lastTag==text):
-                    logging.debug(f"📄 not switching to: {text} since no change")
-                else:                        
+                    logging.debug(f"📄 Not switching to: {text} since no change")
+                else:
+                    logging.info(f"📄 Gelesener Tag: {text}")                        
                     handle_existing_tag(text)
                     lastTag=text
             else:
