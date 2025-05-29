@@ -29,6 +29,9 @@ BL = 18
 bus = 0
 device = 0
 
+round_call_spotify = 20  
+current_round = 0
+
 cache_path = Path(__file__).resolve().parent / ".spotify_cache"
 
 # Set up logging
@@ -158,95 +161,97 @@ def process_once():
     mode = config.get("displayMode", "device")
     initialMode = mode
     status = get_current_status()
-    if (status == "playing"):    
-        try:
-            playback = sp.current_playback()
-            if not playback:
-                logging.warning("⏸ No playback available.")
-                show_local_fallback("no_image.jpg")
-                return
-
-
-            if mode == "delete":
-                show_local_fallback("delete.jpg")
-                return
-
-            if mode == "auto":
-                context = playback.get("context", {})        
-                if not context:
-                    logging.warning("⏸ No context available in auto.")
+    if (status != "playing"):
+        show_local_fallback(f"{status}.jpg")
+    else:
+        if (current_round >= round_call_spotify):    
+            current_round = 0
+            try:
+                playback = sp.current_playback()
+                if not playback:
+                    logging.warning("⏸ No playback available.")
                     show_local_fallback("no_image.jpg")
                     return
 
-                context_type = context.get("type", "")
-                
-                if context_type:
-                    mode = context_type
 
-            if mode == "device":
-                device = playback.get("device")
-                if device:
-                    image_path = mapToImage(device)
-                    show_device(image_path)
-                else:
-                    show_local_fallback("default_device.jpg")
-
-            elif mode == "album":
-                item = playback.get("item")
-                
-                if not item:
-                    logging.warning("⏸ playback item available.")
-                    show_local_fallback("no_image.jpg")
+                if mode == "delete":
+                    show_local_fallback("delete.jpg")
                     return
-                        
-                images = item.get("album", {}).get("images", []) if item else []
-                if images:
-                    show_image_from_url(images[0]["url"])
-                else:
-                    show_local_fallback("default_album.jpg")
 
-            elif mode == "playlist":
-                try:
-                    context = playback.get("context", {})  
+                if mode == "auto":
+                    context = playback.get("context", {})        
                     if not context:
-                        logging.warning("⏸ No context available in playlist.")
+                        logging.warning("⏸ No context available in auto.")
                         show_local_fallback("no_image.jpg")
-                        return                
-                    uri = context.get("uri", "")  
-                    playlist_id = uri.split(":")[-1]
-                    playlist = sp.playlist(playlist_id)
-                    images = playlist.get("images", [])
+                        return
+
+                    context_type = context.get("type", "")
+                    
+                    if context_type:
+                        mode = context_type
+
+                if mode == "device":
+                    device = playback.get("device")
+                    if device:
+                        image_path = mapToImage(device)
+                        show_device(image_path)
+                    else:
+                        show_local_fallback("default_device.jpg")
+
+                elif mode == "album":
+                    item = playback.get("item")
+                    
+                    if not item:
+                        logging.warning("⏸ playback item available.")
+                        show_local_fallback("no_image.jpg")
+                        return
+                            
+                    images = item.get("album", {}).get("images", []) if item else []
                     if images:
                         show_image_from_url(images[0]["url"])
                     else:
-                        show_local_fallback("default_playlist.jpg")
-                        raise Exception("No images in playlist")
-                except Exception as e:
-                    logging.warning(f"⚠️ Fehler beim Playlist-Aufruf: {e}")
-                    if initialMode == "auto":    
-                        item = playback.get("item")                    
-                        track_images = item.get("album", {}).get("images", []) if item else []
-                        if track_images:
-                            show_image_from_url(track_images[0]["url"])
+                        show_local_fallback("default_album.jpg")
+
+                elif mode == "playlist":
+                    try:
+                        context = playback.get("context", {})  
+                        if not context:
+                            logging.warning("⏸ No context available in playlist.")
+                            show_local_fallback("no_image.jpg")
+                            return                
+                        uri = context.get("uri", "")  
+                        playlist_id = uri.split(":")[-1]
+                        playlist = sp.playlist(playlist_id)
+                        images = playlist.get("images", [])
+                        if images:
+                            show_image_from_url(images[0]["url"])
                         else:
                             show_local_fallback("default_playlist.jpg")
-                    else:
-                        show_local_fallback("default_playlist.jpg")
+                            raise Exception("No images in playlist")
+                    except Exception as e:
+                        logging.warning(f"⚠️ Fehler beim Playlist-Aufruf: {e}")
+                        if initialMode == "auto":    
+                            item = playback.get("item")                    
+                            track_images = item.get("album", {}).get("images", []) if item else []
+                            if track_images:
+                                show_image_from_url(track_images[0]["url"])
+                            else:
+                                show_local_fallback("default_playlist.jpg")
+                        else:
+                            show_local_fallback("default_playlist.jpg")
 
-            elif mode == "artist":
-                artistId = playback.get("item").get("album").get("artists")[0].get("id")  
-                show_artist_image(playback, artistId, fallback_mode="auto" if initialMode == "auto" else "default")
-            else:
-                logging.warning(f"❓ Unbekannter Modus: {mode}")
-                show_local_fallback("mode_unknown.jpg")
+                elif mode == "artist":
+                    artistId = playback.get("item").get("album").get("artists")[0].get("id")  
+                    show_artist_image(playback, artistId, fallback_mode="auto" if initialMode == "auto" else "default")
+                else:
+                    logging.warning(f"❓ Unbekannter Modus: {mode}")
+                    show_local_fallback("mode_unknown.jpg")
 
-        except Exception as e:
-            logging.error(f"❌ Fehler in process_once(): {e}")
-            show_local_fallback("error.jpg")   
-        
-        time.sleep(5)
-    else:
-        show_local_fallback(f"{status}.jpg")
+            except Exception as e:
+                logging.error(f"❌ Fehler in process_once(): {e}")
+                show_local_fallback("error.jpg")   
+        else:
+            current_round++
 
 # Initialize display
 disp = LCD_1inch3.LCD_1inch3(
