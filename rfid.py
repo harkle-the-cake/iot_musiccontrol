@@ -122,11 +122,14 @@ def main():
                 if mode in type_map and mode != "auto":
                     t = reverse_type_map.get(mode, t)
                 data = json.dumps({"t": t, "i": i})
-                reader.write_tag(data)
+                id, ok = reader.write_tag(data)
                 id, text = reader.read_tag()
-                logging.debug(f"📝 Geschrieben: {data}")
-                logging.debug(f"📝 Verifiziert: {text}")
-            time.sleep(1)
+                if ok: 
+                    logging.debug(f"📝 Geschrieben: {data}")
+                    logging.debug(f"📝 Verifiziert: {text}")
+                else:                    
+                    logging.error(f"📝 Daten nicht geschrieben: {data}")
+           time.sleep(1)
     finally:
         GPIO.cleanup()
 
