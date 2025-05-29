@@ -160,21 +160,20 @@ def process_once():
             show_local_fallback("no_image.jpg")
             return
 
-        context = playback.get("context", {})        
-        uri = context.get("uri", "")
 
         if mode == "delete":
             show_local_fallback("delete.jpg")
             return
 
         if mode == "auto":
-            context_type = context.get("type", "")
-            
+            context = playback.get("context", {})        
             if not context:
                 logging.warning("⏸ No context available.")
                 show_local_fallback("no_image.jpg")
                 return
 
+            context_type = context.get("type", "")
+            
             if context_type:
                 mode = context_type
 
@@ -202,6 +201,8 @@ def process_once():
 
         elif mode == "playlist":
             try:
+                context = playback.get("context", {})  
+                uri = context.get("uri", "")  
                 playlist_id = uri.split(":")[-1]
                 playlist = sp.playlist(playlist_id)
                 images = playlist.get("images", [])
@@ -223,6 +224,7 @@ def process_once():
                     show_local_fallback("default_playlist.jpg")
 
         elif mode == "artist":
+            uri = context.get("href", "")  
             show_artist_image(playback, uri, fallback_mode="auto" if initialMode == "auto" else "default")
 
         else:
