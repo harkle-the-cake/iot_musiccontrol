@@ -19,7 +19,6 @@ logging.basicConfig(
     format="%(asctime)s [%(levelname)s] %(message)s",
 )
 
-lastTag=""
 
 # Konfiguration laden
 def load_config():
@@ -101,6 +100,7 @@ def handle_existing_tag(tag_data):
 
 def main():
     logging.info("📡 RFID-Service gestartet...")
+    lastTag = ""
     try:
         while True:
             id, text = reader.read_tag()
