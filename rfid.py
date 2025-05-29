@@ -57,8 +57,14 @@ reverse_type_map = {v: k for k, v in type_map.items()}
 reader = SimplePN532(debug=False)
 
 
-def update_status(status):
-    requests.post("http://127.0.0.1:5055/status", json={"status": status})
+def update_status(status_value: str):
+    try:
+        r = requests.post("http://127.0.0.1:5055/status", json={"status": status_value}, timeout=0.5)
+        if logging.getLogger().isEnabledFor(logging.DEBUG):
+            logging.debug(f"📡 Status gesetzt: {status_value} (HTTP {r.status_code})")
+    except Exception as e:
+        if logging.getLogger().isEnabledFor(logging.DEBUG):
+            logging.debug(f"⚠️ Status-Post fehlgeschlagen: {e}")
 
 def get_current_context():
     try:
