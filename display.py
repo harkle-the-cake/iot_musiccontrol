@@ -279,4 +279,4 @@ sp = spotipy.Spotify(auth_manager=SpotifyOAuth(
 # Normal loop mode
 while True:
     process_once()
-    time.sleep(0.2)
+    time.sleep(0.100)

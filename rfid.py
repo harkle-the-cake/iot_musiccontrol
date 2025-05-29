@@ -166,7 +166,7 @@ def main():
                         logging.error(f"📝 Daten nicht geschrieben: {data}")
                         update_status("error")
             else:
-                logging.warning(f"📄 Tag {id} not ready successful.")
+                logging.warning(f"📄 Tag {id} not read successful.")
                 update_status("error")
                         
             time.sleep(1)
