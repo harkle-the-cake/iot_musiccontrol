@@ -14,7 +14,7 @@ from spotipy.oauth2 import SpotifyOAuth
 
 # Set up logging
 logging.basicConfig(
-    level=logging.INFO,
+    level=logging.DEBUG,
     format="%(asctime)s [%(levelname)s] %(message)s",
 )
 
@@ -73,7 +73,7 @@ def handle_existing_tag(tag_data):
         i = data.get("i")
         if not t or not i:
             raise ValueError("⚠️ Ungültige Tag-Daten")
-        logging.info(f"🎯 Tag erkannt: Type={t}, ID={i}")
+        logging.debug(f"🎯 Tag erkannt: Type={t}, ID={i}")
         if t == "p":
             sp.start_playback(context_uri=f"spotify:playlist:{i}")
         elif t == "a":
@@ -111,7 +111,7 @@ def main():
 
             if text:
                 text = text.strip()
-                logging.info(f"📄 Gelesener Tag: {text}")
+                logging.debug(f"📄 Gelesener Tag: {text}")
                 handle_existing_tag(text)
             else:
                 t, i = get_current_context()
@@ -123,7 +123,9 @@ def main():
                     t = reverse_type_map.get(mode, t)
                 data = json.dumps({"t": t, "i": i})
                 reader.write_tag(data)
-                logging.info(f"📝 Geschrieben: {data}")
+                id, text = reader.read_tag()
+                logging.debug(f"📝 Geschrieben: {data}")
+                logging.debug(f"📝 Verifiziert: {text}")
             time.sleep(1)
     finally:
         GPIO.cleanup()
