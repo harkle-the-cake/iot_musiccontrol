@@ -157,7 +157,8 @@ def main():
                     data = json.dumps({"t": t, "i": i})
                     id, written = reader.write_tag(data)
                     
-                    if written: 
+                    if written:                         
+                        update_status("reading")
                         id, text = reader.read_tag()
                         logging.debug(f"📝 Verifiziert: {text}")
                         logging.info(f"📝 Geschrieben: {data}")
