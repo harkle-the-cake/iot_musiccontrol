@@ -117,9 +117,10 @@ def main():
             if not id:
                 time.sleep(0.5)
                 continue
+
+            update_status("reading")
             
-            mode = config.get("rfidMode")
-            
+            mode = config.get("rfidMode")            
             if mode == "delete":
                 if text:                    
                     update_status("deleting")
@@ -133,8 +134,9 @@ def main():
                         update_status("error")
                 continue
             
-            if successful:
+            if successful:                
                 if text:
+                    update_status("success")
                     text = text.strip()
                     if (lastTag==text):
                         logging.debug(f"📄 Not switching to: {text} since no change")
@@ -164,7 +166,8 @@ def main():
                         logging.error(f"📝 Daten nicht geschrieben: {data}")
                         update_status("error")
             else:
-                logging.warning(f"📄 Tag {id} not ready successful.")                
+                logging.warning(f"📄 Tag {id} not ready successful.")
+                update_status("error")
                         
             time.sleep(1)
     finally:

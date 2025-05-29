@@ -29,20 +29,19 @@ class SimplePN532:
 
         data = bytearray()
         for i in range(self.block_count):
-            block = self.pn532.ntag2xx_read_block(self.start_block + i)
-            retry_counter = 0
-            
-            while (block is None and retry_counter < 10):
+            for retry in range(10):
                 block = self.pn532.ntag2xx_read_block(self.start_block + i)
-                retry_counter = retry_counter + 1
-                
+                if block is not None:
+                    break
+            else:
+                block = None  # Alle 10 Versuche fehlgeschlagen
+
             if block is None:
                 if strict:
                     return uid, None, False
-                else:
-                    successful = False
-                    logging.warning(f"⚠️ Block {self.start_block + i} konnte nicht gelesen werden.")
-                    data.extend(b"\x00\x00\x00\x00")
+                successful = False
+                logging.warning(f"⚠️ Block {self.start_block + i} konnte nicht gelesen werden.")
+                data.extend(b"\x00\x00\x00\x00")
             else:
                 data.extend(block)
 

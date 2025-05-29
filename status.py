@@ -29,7 +29,7 @@ def set_status():
     data = request.get_json()
     new_status = data.get("status")
 
-    if new_status not in ["playing", "writing", "success", "error", "deleting"]:
+    if new_status not in ["playing", "writing", "success", "error", "deleting","reading"]:
         return jsonify({"error": "Invalid status"}), 400
 
     with lock:
