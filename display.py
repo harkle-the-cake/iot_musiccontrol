@@ -74,9 +74,6 @@ def load_config():
             return json.load(f)
     return {"mode": "device"}# Konfiguration laden
     
-def update_satus(status):
-    
-
 def show_device(image_path):
     try:
         from PIL import Image
