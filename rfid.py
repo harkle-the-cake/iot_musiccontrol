@@ -12,36 +12,29 @@ from libs.SimplePN532 import SimplePN532  # deine angepasste Klasse
 import spotipy
 from spotipy.oauth2 import SpotifyOAuth
 
-# Logging setup
-logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
-
-# Lade .env
-load_dotenv(dotenv_path=Path(__file__).resolve().parent / ".env")
+# Set up logging
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(message)s",
+)
 
 # Konfiguration laden
-config_path = Path(__file__).resolve().parent / "config.json"
-config = {
-    "mode": "auto",
-    "rotation": 0,
-    "redirect_uri": "http://localhost:8888/callback"
-}
-if config_path.exists():
-    try:
-        with config_path.open() as f:
-            config.update(json.load(f))
-    except Exception as e:
-        logging.warning(f"⚠️ Konnte config.json nicht laden: {e}")
+def load_config():
+    config_path = Path(__file__).resolve().parent / "config.json"
+    if config_path.exists():
+        with open(config_path) as f:
+            import json
+            return json.load(f)
+    return {"mode": "uhknown"}
 
-mode = config.get("mode", "auto")
-redirect_uri = config.get("redirect_uri", "http://localhost:8888/callback")
-
+config = load_config()
 # Spotify auth
 try:
     sp = spotipy.Spotify(auth_manager=SpotifyOAuth(
-        client_id=os.getenv("SPOTIFY_CLIENT_ID"),
-        client_secret=os.getenv("SPOTIFY_CLIENT_SECRET"),
-        redirect_uri=redirect_uri,
-        scope="user-read-playback-state user-modify-playback-state",
+        client_id=config.get("client_id"),
+        client_secret=config.get("client_secret"),
+        redirect_uri=config.get("redirect_uri"),
+        scope="user-read-playback-state user-modify-playback-state user-read-private user-read-email",
         cache_path=Path(__file__).resolve().parent / ".spotify_cache",
         open_browser=False
     ))
