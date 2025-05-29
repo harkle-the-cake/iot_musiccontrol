@@ -43,7 +43,7 @@ sudo apt install -y python3 python3-pip libjpeg-dev libopenjp2-7 libopenblas0 \
 sudo apt autoremove
 
 # Spotipy (nur über pip verfügbar)
-python3 -m pip install --upgrade pip
+python3 -m pip install --upgrade pip --break-system-packages 
 pip3 install --no-cache-dir spotipy python-dotenv adafruit-circuitpython-pn532 --break-system-packages
 
 # create certs
