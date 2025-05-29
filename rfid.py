@@ -52,7 +52,7 @@ type_map = {
 }
 reverse_type_map = {v: k for k, v in type_map.items()}
 
-reader = SimplePN532()
+reader = SimplePN532(debug=True)
 
 def get_current_context():
     try:
@@ -114,6 +114,7 @@ def main():
                 logging.debug(f"📄 Gelesener Tag: {text}")
                 handle_existing_tag(text)
             else:
+                logging.debug(f"📄 Gelesener Tag leer")
                 t, i = get_current_context()
                 if not t or not i:
                     logging.warning("🚫 Kein gültiger Kontext zum Schreiben")
