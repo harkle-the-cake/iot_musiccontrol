@@ -251,7 +251,7 @@ def process_once():
                 logging.error(f"❌ Fehler in process_once(): {e}")
                 show_local_fallback("error.jpg")   
         else:
-            current_round++
+            current_round = current_round + 1
 
 # Initialize display
 disp = LCD_1inch3.LCD_1inch3(
