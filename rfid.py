@@ -19,6 +19,8 @@ logging.basicConfig(
     format="%(asctime)s [%(levelname)s] %(message)s",
 )
 
+lastTag=""
+
 # Konfiguration laden
 def load_config():
     config_path = Path(__file__).resolve().parent / "config.json"
@@ -125,7 +127,11 @@ def main():
             if text:
                 text = text.strip()
                 logging.info(f"📄 Gelesener Tag: {text}")
-                handle_existing_tag(text)
+                if (lastTag==text):
+                    logging.debug(f"📄 not switching to: {text} since no change")
+                else:                        
+                    handle_existing_tag(text)
+                    lastTag=text
             else:
                 logging.debug(f"📄 Gelesener Tag leer")
                 update_status("writing")
