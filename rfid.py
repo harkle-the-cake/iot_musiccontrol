@@ -21,6 +21,8 @@ logging.basicConfig(
 
 logging.getLogger("requests").setLevel(logging.WARNING)
 logging.getLogger("urllib3").setLevel(logging.WARNING)
+# Disable all child loggers of urllib3, e.g. urllib3.connectionpool
+logging.getLogger("urllib3").propagate = False
 
 # Konfiguration laden
 def load_config():
