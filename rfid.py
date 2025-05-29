@@ -14,7 +14,7 @@ from spotipy.oauth2 import SpotifyOAuth
 
 # Set up logging
 logging.basicConfig(
-    level=logging.DEBUG,
+    level=logging.INFO,
     format="%(asctime)s [%(levelname)s] %(message)s",
 )
 
@@ -52,7 +52,7 @@ type_map = {
 }
 reverse_type_map = {v: k for k, v in type_map.items()}
 
-reader = SimplePN532(debug=True)
+reader = SimplePN532(debug=False)
 
 def get_current_context():
     try:
@@ -111,7 +111,7 @@ def main():
 
             if text:
                 text = text.strip()
-                logging.debug(f"📄 Gelesener Tag: {text}")
+                logging.info(f"📄 Gelesener Tag: {text}")
                 handle_existing_tag(text)
             else:
                 logging.debug(f"📄 Gelesener Tag leer")
@@ -127,8 +127,8 @@ def main():
                 
                 if written: 
                     id, text = reader.read_tag()
-                    logging.debug(f"📝 Geschrieben: {data}")
                     logging.debug(f"📝 Verifiziert: {text}")
+                    logging.info(f"📝 Geschrieben: {data}")
                 else:                    
                     logging.error(f"📝 Daten nicht geschrieben: {data}")
                     
