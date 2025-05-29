@@ -113,7 +113,7 @@ def main():
     lastTag = ""
     try:
         while True:
-            id, text = reader.read_tag()
+            id, text, successful = reader.read_tag()
             if not id:
                 time.sleep(0.5)
                 continue
@@ -125,7 +125,7 @@ def main():
                     update_status("deleting")
                     logging.info(f"🗑 Tag {id} wird gelöscht.")
                     reader.write_tag("")
-                    id, text = reader.read_tag()
+                    id, text, successful = reader.read_tag()
                     logging.info(f"🗑 Tag {id} Inhalt: {text}")
                     if not text:
                         update_status("success")
@@ -133,35 +133,38 @@ def main():
                         update_status("error")
                 continue
             
-            if text:
-                text = text.strip()
-                if (lastTag==text):
-                    logging.debug(f"📄 Not switching to: {text} since no change")
+            if successful:
+                if text:
+                    text = text.strip()
+                    if (lastTag==text):
+                        logging.debug(f"📄 Not switching to: {text} since no change")
+                    else:
+                        logging.info(f"📄 Gelesener Tag: {text}")                        
+                        handle_existing_tag(text)
+                        lastTag=text
                 else:
-                    logging.info(f"📄 Gelesener Tag: {text}")                        
-                    handle_existing_tag(text)
-                    lastTag=text
+                    logging.debug(f"📄 Gelesener Tag leer")
+                    update_status("writing")
+                    t, i = get_current_context()
+                    if not t or not i:
+                        logging.warning("🚫 Kein gültiger Kontext zum Schreiben")
+                        continue
+                    # Bei festem Modus überschreiben
+                    if mode in type_map and mode != "auto":
+                        t = reverse_type_map.get(mode, t)
+                    data = json.dumps({"t": t, "i": i})
+                    id, written = reader.write_tag(data)
+                    
+                    if written: 
+                        id, text = reader.read_tag()
+                        logging.debug(f"📝 Verifiziert: {text}")
+                        logging.info(f"📝 Geschrieben: {data}")
+                        update_status("success")
+                    else:                    
+                        logging.error(f"📝 Daten nicht geschrieben: {data}")
+                        update_status("error")
             else:
-                logging.debug(f"📄 Gelesener Tag leer")
-                update_status("writing")
-                t, i = get_current_context()
-                if not t or not i:
-                    logging.warning("🚫 Kein gültiger Kontext zum Schreiben")
-                    continue
-                # Bei festem Modus überschreiben
-                if mode in type_map and mode != "auto":
-                    t = reverse_type_map.get(mode, t)
-                data = json.dumps({"t": t, "i": i})
-                id, written = reader.write_tag(data)
-                
-                if written: 
-                    id, text = reader.read_tag()
-                    logging.debug(f"📝 Verifiziert: {text}")
-                    logging.info(f"📝 Geschrieben: {data}")
-                    update_status("success")
-                else:                    
-                    logging.error(f"📝 Daten nicht geschrieben: {data}")
-                    update_status("error")
+                logging.warning(f"📄 Tag {id} not ready successful.")                
                         
             time.sleep(1)
     finally:
