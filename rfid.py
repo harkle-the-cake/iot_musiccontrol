@@ -70,17 +70,66 @@ def update_status(status_value: str):
         if logging.getLogger().isEnabledFor(logging.DEBUG):
             logging.debug(f"⚠️ Status-Post fehlgeschlagen: {e}")
 
-def get_current_context():
+def get_current_context(mode="auto"):
     try:
         playback = sp.current_playback()
-        context = playback.get("context") if playback else None
-        if context and context.get("type") in reverse_type_map:
-            short_type = reverse_type_map[context["type"]]
-            return short_type, context["uri"].split(":")[-1]
+        if not playback:
+            logging.warning("🚫 Kein aktueller Spotify-Playback verfügbar.")
+            return None, None
+
+        if mode == "device":
+            device = playback.get("device", {})
+            device_id = device.get("id")
+            if device_id:
+                return "d", device_id
+            else:
+                logging.warning("⚠️ Kein aktives Gerät gefunden.")
+                return None, None
+
+        if mode in ["auto", "playlist", "album", "artist", "audiobook"]:
+            # Prüfe ob context überhaupt vorhanden ist
+            context = playback.get("context")
+            uri = context.get("uri") if context else None
+            ctype = context.get("type") if context else None
+
+            # Auto-Modus → direkt übernehmen
+            if mode == "auto" and ctype in ["playlist", "album", "artist", "audiobook"]:
+                return {
+                    "playlist": "p",
+                    "album": "a",
+                    "artist": "r",
+                    "audiobook": "b"
+                }.get(ctype), uri.split(":")[-1]
+
+            # Bei festen Modi prüfen: item vorhanden?
+            item = playback.get("item", {})
+
+            if mode == "album":
+                album = item.get("album", {})
+                album_uri = album.get("uri")
+                if album_uri:
+                    return "a", album_uri.split(":")[-1]
+
+            if mode == "artist":
+                artists = item.get("artists", [])
+                if artists:
+                    return "r", artists[0].get("id")
+
+            if mode == "playlist":
+                if ctype == "playlist" and uri:
+                    return "p", uri.split(":")[-1]
+
+            if mode == "audiobook":
+                if ctype == "audiobook" and uri:
+                    return "b", uri.split(":")[-1]
+
+        logging.warning(f"⚠️ Keine passende Information für Modus '{mode}' gefunden.")
         return None, None
+
     except Exception as e:
-        logging.warning(f"⚠️ Konnte Kontext nicht laden: {e}")
+        logging.error(f"❌ Fehler beim Lesen des Spotify-Kontexts: {e}")
         return None, None
+
 
 def handle_existing_tag(tag_data):
     try:
@@ -147,7 +196,7 @@ def main():
                 else:
                     logging.debug(f"📄 Gelesener Tag leer")
                     update_status("writing")
-                    t, i = get_current_context()
+                    t, i = get_current_context(mode)
                     if not t or not i:
                         logging.warning("🚫 Kein gültiger Kontext zum Schreiben")
                         continue
