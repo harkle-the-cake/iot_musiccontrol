@@ -108,30 +108,30 @@ def main():
                     logging.info(f"🗑 Tag {id} wird gelöscht.")
                     reader.write_tag("")
                 continue
-
-            if text:
-                text = text.strip()
-                logging.info(f"📄 Gelesener Tag: {text}")
-                handle_existing_tag(text)
-            else:
-                logging.debug(f"📄 Gelesener Tag leer")
-                t, i = get_current_context()
-                if not t or not i:
-                    logging.warning("🚫 Kein gültiger Kontext zum Schreiben")
-                    continue
-                # Bei festem Modus überschreiben
-                if mode in type_map and mode != "auto":
-                    t = reverse_type_map.get(mode, t)
-                data = json.dumps({"t": t, "i": i})
-                id, written = reader.write_tag(data)
-                
-                if written: 
-                    id, text = reader.read_tag()
-                    logging.debug(f"📝 Verifiziert: {text}")
-                    logging.info(f"📝 Geschrieben: {data}")
-                else:                    
-                    logging.error(f"📝 Daten nicht geschrieben: {data}")
+            else
+                if text:
+                    text = text.strip()
+                    logging.info(f"📄 Gelesener Tag: {text}")
+                    handle_existing_tag(text)
+                else:
+                    logging.debug(f"📄 Gelesener Tag leer")
+                    t, i = get_current_context()
+                    if not t or not i:
+                        logging.warning("🚫 Kein gültiger Kontext zum Schreiben")
+                        continue
+                    # Bei festem Modus überschreiben
+                    if mode in type_map and mode != "auto":
+                        t = reverse_type_map.get(mode, t)
+                    data = json.dumps({"t": t, "i": i})
+                    id, written = reader.write_tag(data)
                     
+                    if written: 
+                        id, text = reader.read_tag()
+                        logging.debug(f"📝 Verifiziert: {text}")
+                        logging.info(f"📝 Geschrieben: {data}")
+                    else:                    
+                        logging.error(f"📝 Daten nicht geschrieben: {data}")
+                        
             time.sleep(1)
     finally:
         GPIO.cleanup()
