@@ -5,6 +5,7 @@ set -e  # abort on error
 SERVICE_NAME="display.service"
 SERVICE_NAME_WEB="web.service"
 SERVICE_NAME_RFID="rfid.service"
+SERVICE_NAME_STATUS="status.service"
 SCRIPT_NAME="app.py"
 ENV_FILE=".env"
 SERVICE_PATH="/etc/systemd/system/"
@@ -37,7 +38,7 @@ sudo apt-get upgrade
 					
 sudo apt install -y python3 python3-pip libjpeg-dev libopenjp2-7 libopenblas0 \
   python3-flask python3-requests python3-numpy python3-pillow python3-dotenv python3-spidev \
-  libusb-dev libpcsclite-dev i2c-tools \
+  libusb-dev libpcsclite-dev i2c-tools
  
 sudo apt autoremove
 
@@ -63,6 +64,10 @@ sudo cp "$SERVICE_NAME_WEB" "$SERVICE_PATH"
 echo "🛠️ Installing systemd service for rfid..."
 sudo cp "$SERVICE_NAME_RFID" "$SERVICE_PATH"
 
+# Install and start systemd service
+echo "🛠️ Installing systemd service for status handling..."
+sudo cp "$SERVICE_NAME_STATUS" "$SERVICE_PATH"
+
 # reloading service deamon
 sudo systemctl daemon-reload
 
@@ -78,6 +83,10 @@ sudo systemctl restart "$SERVICE_NAME_WEB"
 echo "🔁 Enabling and starting service for rfid..."
 sudo systemctl enable "$SERVICE_NAME_RFID"
 sudo systemctl restart "$SERVICE_NAME_RFID"
+
+echo "🔁 Enabling and starting service for status..."
+sudo systemctl enable "$SERVICE_NAME_STATUS"
+sudo systemctl restart "$SERVICE_NAME_STATUS"
 
 echo "✅ Setup complete."
 

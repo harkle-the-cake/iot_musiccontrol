@@ -11,6 +11,7 @@ from dotenv import load_dotenv
 from libs.SimplePN532 import SimplePN532  # deine angepasste Klasse
 import spotipy
 from spotipy.oauth2 import SpotifyOAuth
+import requests
 
 # Set up logging
 logging.basicConfig(
@@ -53,6 +54,10 @@ type_map = {
 reverse_type_map = {v: k for k, v in type_map.items()}
 
 reader = SimplePN532(debug=False)
+
+
+def update_status(status):
+    requests.post("http://127.0.0.1:5055/status", json={"status": status})
 
 def get_current_context():
     try:
@@ -98,17 +103,23 @@ def main():
         while True:
             id, text = reader.read_tag()
             if not id:
+                update_status("playing")
                 time.sleep(0.5)
                 continue
             
             mode = config.get("rfidMode")
             
             if mode == "delete":
-                if text:
+                if text:                    
+                    update_status("deleting")
                     logging.info(f"🗑 Tag {id} wird gelöscht.")
                     reader.write_tag("")
                     id, text = reader.read_tag()
                     logging.info(f"🗑 Tag {id} Inhalt: {text}")
+                    if not text:
+                        update_status("success")
+                    else:
+                        update_status("error")
                 continue
             
             if text:
@@ -117,6 +128,7 @@ def main():
                 handle_existing_tag(text)
             else:
                 logging.debug(f"📄 Gelesener Tag leer")
+                update_status("writing")
                 t, i = get_current_context()
                 if not t or not i:
                     logging.warning("🚫 Kein gültiger Kontext zum Schreiben")
@@ -131,8 +143,10 @@ def main():
                     id, text = reader.read_tag()
                     logging.debug(f"📝 Verifiziert: {text}")
                     logging.info(f"📝 Geschrieben: {data}")
+                    update_status("success")
                 else:                    
                     logging.error(f"📝 Daten nicht geschrieben: {data}")
+                    update_status("error")
                         
             time.sleep(1)
     finally:
