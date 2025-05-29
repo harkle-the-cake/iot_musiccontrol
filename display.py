@@ -244,6 +244,7 @@ def process_once():
     mode = config.get("displayMode", "device")
     initialMode = mode
     status = get_current_status()
+    last_spotify_call = 0
     if (status != "playing"):
         show_local_fallback(f"{status}.jpg")
     else:
