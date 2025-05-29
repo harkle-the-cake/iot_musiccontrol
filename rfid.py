@@ -103,7 +103,7 @@ def main():
     logging.info("📡 RFID-Service gestartet...")
     try:
         while True:
-            id, text = reader.read_no_block()
+            id, text = reader.read_tag()
             if not id:
                 time.sleep(0.5)
                 continue
@@ -112,7 +112,7 @@ def main():
             if mode == "delete":
                 if text:
                     logging.info(f"🗑 Tag {id} wird gelöscht.")
-                    reader.write("")
+                    reader.write_tag("")
                 continue
 
             if text:
@@ -127,7 +127,7 @@ def main():
                 if mode in type_map and mode != "auto":
                     t = reverse_type_map.get(mode, t)
                 data = json.dumps({"t": t, "i": i})
-                reader.write(data)
+                reader.write_tag(data)
                 logging.info(f"📝 Geschrieben: {data}")
             time.sleep(1)
     finally:
