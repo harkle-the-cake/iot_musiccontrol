@@ -65,6 +65,13 @@ def load_config():
         with open(config_path) as f:
             import json
             return json.load(f)
+    return {"mode": "device"}# Konfiguration laden
+def load_config():
+    config_path = Path(__file__).resolve().parent / "config.json"
+    if config_path.exists():
+        with open(config_path) as f:
+            import json
+            return json.load(f)
     return {"mode": "device"}
 
 
@@ -154,6 +161,12 @@ def process_once():
             return
 
         context = playback.get("context", {})
+        
+        if not context:
+            logging.warning("⏸ No context available.")
+            show_local_fallback("no_image.jpg")
+            return
+        
         context_type = context.get("type", "")
         uri = context.get("uri", "")
 
@@ -175,6 +188,12 @@ def process_once():
 
         elif mode == "album":
             item = playback.get("item")
+            
+            if not item:
+                logging.warning("⏸ playback item available.")
+                show_local_fallback("no_image.jpg")
+                return
+                    
             images = item.get("album", {}).get("images", []) if item else []
             if images:
                 show_image_from_url(images[0]["url"])
