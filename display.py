@@ -242,7 +242,7 @@ def process_once():
             logging.error(f"❌ Fehler in process_once(): {e}")
             show_local_fallback("error.jpg")   
         
-        time.sleep(4)
+        time.sleep(5)
     else:
         show_local_fallback(f"{status}.jpg")
 
@@ -270,4 +270,4 @@ sp = spotipy.Spotify(auth_manager=SpotifyOAuth(
 # Normal loop mode
 while True:
     process_once()
-    time.sleep(1)
+    time.sleep(0.2)
