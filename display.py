@@ -168,7 +168,7 @@ def process_once():
         if mode == "auto":
             context = playback.get("context", {})        
             if not context:
-                logging.warning("⏸ No context available.")
+                logging.warning("⏸ No context available in auto.")
                 show_local_fallback("no_image.jpg")
                 return
 
@@ -202,6 +202,10 @@ def process_once():
         elif mode == "playlist":
             try:
                 context = playback.get("context", {})  
+                if not context:
+                    logging.warning("⏸ No context available in playlist.")
+                    show_local_fallback("no_image.jpg")
+                    return                
                 uri = context.get("uri", "")  
                 playlist_id = uri.split(":")[-1]
                 playlist = sp.playlist(playlist_id)
@@ -224,7 +228,7 @@ def process_once():
                     show_local_fallback("default_playlist.jpg")
 
         elif mode == "artist":
-            uri = context.get("href", "")  
+            uri = playback.get("href", "")  
             show_artist_image(playback, uri, fallback_mode="auto" if initialMode == "auto" else "default")
 
         else:
