@@ -101,6 +101,8 @@ def main():
                 time.sleep(0.5)
                 continue
             
+            mode = config.get("rfidMode")
+            
             if mode == "delete":
                 if text:
                     logging.info(f"🗑 Tag {id} wird gelöscht.")
