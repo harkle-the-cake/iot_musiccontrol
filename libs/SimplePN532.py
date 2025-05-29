@@ -21,41 +21,41 @@ class SimplePN532:
         self.start_block = start_block
         self.block_count = block_count  # Standard: 12 Blöcke × 4 Byte = 48 Byte
 
-   def read_tag(self, timeout=2.0, retry_delay=0.1):
-    """
-    Liest den Inhalt eines Tags (ASCII) robust, bis alle Blöcke erfolgreich gelesen wurden
-    oder ein Timeout überschritten ist.
-    Gibt (UID, Text) zurück oder (None, None) bei Nichterkennung.
-    """
-    start_time = time.time()
-    uid = None
+    def read_tag(self, timeout=2.0, retry_delay=0.1):
+        """
+        Liest den Inhalt eines Tags (ASCII) robust, bis alle Blöcke erfolgreich gelesen wurden
+        oder ein Timeout überschritten ist.
+        Gibt (UID, Text) zurück oder (None, None) bei Nichterkennung.
+        """
+        start_time = time.time()
+        uid = None
 
-    while (time.time() - start_time) < timeout:
-        uid = self.pn532.read_passive_target(timeout=0.5)
-        if not uid:
-            continue
+        while (time.time() - start_time) < timeout:
+            uid = self.pn532.read_passive_target(timeout=0.5)
+            if not uid:
+                continue
 
-        all_blocks = {}
-        while len(all_blocks) < self.block_count:
+            all_blocks = {}
+            while len(all_blocks) < self.block_count:
+                for i in range(self.block_count):
+                    if i in all_blocks:
+                        continue
+                    block_index = self.start_block + i
+                    block = self.pn532.ntag2xx_read_block(block_index)
+                    if block:
+                        all_blocks[i] = block
+                    else:
+                        logging.debug(f"⚠️ Block {block_index} konnte nicht gelesen werden – neuer Versuch...")
+                time.sleep(retry_delay)
+
+            # Nach erfolgreichem Lesen aller Blöcke:
+            data = bytearray()
             for i in range(self.block_count):
-                if i in all_blocks:
-                    continue
-                block_index = self.start_block + i
-                block = self.pn532.ntag2xx_read_block(block_index)
-                if block:
-                    all_blocks[i] = block
-                else:
-                    logging.debug(f"⚠️ Block {block_index} konnte nicht gelesen werden – neuer Versuch...")
-            time.sleep(retry_delay)
+                data.extend(all_blocks[i])
+            text = data.rstrip(b"\x00").decode("utf-8", errors="replace")
+            return uid, text
 
-        # Nach erfolgreichem Lesen aller Blöcke:
-        data = bytearray()
-        for i in range(self.block_count):
-            data.extend(all_blocks[i])
-        text = data.rstrip(b"\x00").decode("utf-8", errors="replace")
-        return uid, text
-
-    return None, None  # Timeout erreicht
+        return None, None  # Timeout erreicht
 
 
     def write_tag(self, text, timeout=0.5):
