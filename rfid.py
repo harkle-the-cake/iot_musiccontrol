@@ -100,8 +100,7 @@ def main():
             if not id:
                 time.sleep(0.5)
                 continue
-
-            text = text.strip()
+            
             if mode == "delete":
                 if text:
                     logging.info(f"🗑 Tag {id} wird gelöscht.")
@@ -109,6 +108,7 @@ def main():
                 continue
 
             if text:
+                text = text.strip()
                 logging.info(f"📄 Gelesener Tag: {text}")
                 handle_existing_tag(text)
             else:
