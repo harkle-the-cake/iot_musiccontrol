@@ -33,7 +33,7 @@ cache_path = Path(__file__).resolve().parent / ".spotify_cache"
 
 # Set up logging
 logging.basicConfig(
-    level=logging.INFO,
+    level=logging.DEBUG,
     format="%(asctime)s [%(levelname)s] %(message)s",
 )
 
@@ -249,10 +249,11 @@ def process_once():
         show_local_fallback(f"{status}.jpg")
     else:
         if time.time() - last_spotify_call > 4:
+            logging.debug(f"processing spotify update...")
             last_spotify_call = time.time()
             process_spotify_update()
         else:
-            logging.debig(f"waiting for next processing time...")
+            logging.debug(f"waiting for next processing time...")
 
 # Initialize display
 disp = LCD_1inch3.LCD_1inch3(
