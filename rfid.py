@@ -23,7 +23,7 @@ logging.basicConfig(
 logging.getLogger("requests").setLevel(logging.ERROR)
 logging.getLogger("urllib3").setLevel(logging.ERROR)
 # Disable all child loggers of urllib3, e.g. urllib3.connectionpool
-logging.getLogger("urllib3").propagate = False
+logging.getLogger("urllib3").propagate = True
 
 # Konfiguration laden
 def load_config():
