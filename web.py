@@ -8,6 +8,7 @@ from PIL import Image
 from pathlib import Path
 import os
 import json
+import json
 from dotenv import load_dotenv
 
 # Konfiguration
