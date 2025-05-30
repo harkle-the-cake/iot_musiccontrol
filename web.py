@@ -73,7 +73,10 @@ def restart_system():
     """Startet das System neu (z. B. per systemctl)"""
     import subprocess
     try:
-        subprocess.Popen(["sudo", "systemctl", "restart", "status rfid display web"])
+        subprocess.Popen(["sudo", "systemctl", "restart", "status"])
+        subprocess.Popen(["sudo", "systemctl", "restart", "rfid"])
+        subprocess.Popen(["sudo", "systemctl", "restart", "display"])
+        subprocess.Popen(["sudo", "systemctl", "restart", "web"])
         return jsonify({"status": "success", "message": "Service restart initiated."})
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
@@ -84,7 +87,10 @@ def update_code():
     import subprocess
     try:
         output = subprocess.check_output(["git", "pull"], cwd=str(Path(__file__).resolve().parent))
-        subprocess.Popen(["sudo", "systemctl", "restart", "status rfid display web"])
+        subprocess.Popen(["sudo", "systemctl", "restart", "status"])
+        subprocess.Popen(["sudo", "systemctl", "restart", "rfid"])
+        subprocess.Popen(["sudo", "systemctl", "restart", "display"])
+        subprocess.Popen(["sudo", "systemctl", "restart", "web"])
         return jsonify({"status": "success", "message": output.decode("utf-8")})
     except subprocess.CalledProcessError as e:
         return jsonify({"status": "error", "message": e.output.decode("utf-8")}), 500
