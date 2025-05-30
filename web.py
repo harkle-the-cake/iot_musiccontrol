@@ -57,6 +57,38 @@ def get_spotify(config):
     except Exception as e:
         return None, f"❌ Fehler beim Authentifizieren: {e}"
 
+@app.route("/auth/reset", methods=["POST"])
+def reset_auth():
+    """Löscht Cache-Dateien und erzwingt neue Spotify-Authentifizierung"""
+    try:
+        for file in Path(".").glob(".spotify_cache*"):
+            file.unlink()
+        return jsonify({"status": "success", "message": "Auth cache cleared. Restart required."})
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+@app.route("/system/restart", methods=["POST"])
+def restart_system():
+    """Startet das System neu (z. B. per systemctl)"""
+    import subprocess
+    try:
+        subprocess.Popen(["sudo", "systemctl", "restart", "status rfid display web"])
+        return jsonify({"status": "success", "message": "Service restart initiated."})
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+@app.route("/system/update", methods=["POST"])
+def update_code():
+    """Holt neuesten Stand aus Git-Repo und startet das System neu"""
+    import subprocess
+    try:
+        output = subprocess.check_output(["git", "pull"], cwd=str(Path(__file__).resolve().parent))
+        subprocess.Popen(["sudo", "systemctl", "restart", "status rfid display web"])
+        return jsonify({"status": "success", "message": output.decode("utf-8")})
+    except subprocess.CalledProcessError as e:
+        return jsonify({"status": "error", "message": e.output.decode("utf-8")}), 500
+
+
 @app.route("/", methods=["GET"])
 def index():
     config = load_config()

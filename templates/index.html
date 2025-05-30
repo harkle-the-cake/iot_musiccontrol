@@ -24,6 +24,63 @@
 </head>
 <body>
   <div class="container">
+  
+<div class="container mt-5">
+  <h2 class="mb-3">🛠 Admin-Tools</h2>
+
+  <div class="row g-3">
+
+		<!-- Auth Reset -->
+		<div class="col-md-4">
+		  <div class="card shadow-sm border-0">
+			<div class="card-body text-center">
+			  <h5 class="card-title">🔐 Auth zurücksetzen</h5>
+			  <p class="card-text">Spotify-Authentifizierung neu starten.</p>
+			  <button class="btn btn-outline-danger w-100" onclick="adminAction('/auth/reset')">Zurücksetzen</button>
+			</div>
+		  </div>
+		</div>
+
+		<!-- Restart -->
+		<div class="col-md-4">
+		  <div class="card shadow-sm border-0">
+			<div class="card-body text-center">
+			  <h5 class="card-title">🔄 Neustart</h5>
+			  <p class="card-text">Startet alle Dienste neu.</p>
+			  <button class="btn btn-outline-warning w-100" onclick="adminAction('/system/restart')">Neustarten</button>
+			</div>
+		  </div>
+		</div>
+
+		<!-- Git Pull & Restart -->
+		<div class="col-md-4">
+		  <div class="card shadow-sm border-0">
+			<div class="card-body text-center">
+			  <h5 class="card-title">⬇️ Git Pull</h5>
+			  <p class="card-text">Code aktualisieren und neu starten.</p>
+			  <button class="btn btn-outline-primary w-100" onclick="adminAction('/system/update')">Update & Restart</button>
+			</div>
+		  </div>
+		</div>
+
+	  </div>
+
+	  <!-- Feedback -->
+	  <div class="mt-4 alert d-none" id="adminStatus"></div>
+	</div>
+
+	<script>
+	  async function adminAction(endpoint) {
+		const response = await fetch(endpoint, { method: "POST" });
+		const result = await response.json();
+		const statusBox = document.getElementById("adminStatus");
+
+		statusBox.classList.remove("d-none", "alert-success", "alert-danger");
+		statusBox.classList.add(response.ok ? "alert-success" : "alert-danger");
+		statusBox.textContent = result.message || "Fehler";
+	  }
+	</script>
+  
     <!-- Abschnitt 1: Spotify-Status -->
     <div class="card mb-4">
       <div class="card-header">🎧 Spotify-Status</div>
