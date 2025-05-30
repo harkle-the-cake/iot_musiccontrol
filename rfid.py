@@ -12,6 +12,7 @@ from libs.SimplePN532 import SimplePN532  # deine angepasste Klasse
 import spotipy
 from spotipy.oauth2 import SpotifyOAuth
 import requests
+from spotipy.exceptions import SpotifyException
 
 # Set up logging
 logging.basicConfig(
@@ -42,7 +43,10 @@ try:
         redirect_uri=config.get("redirect_uri"),
         scope="user-read-playback-state user-modify-playback-state user-read-private user-read-email",
         cache_path=Path(__file__).resolve().parent / ".spotify_cache",
-        open_browser=False
+        open_browser=False,
+        requests_timeout=10,
+        retries=3,                 # wichtig!
+        status_forcelist=[429, 500, 502, 503, 504]
     ))
 except Exception as e:
     logging.error(f"❌ Spotify Auth fehlgeschlagen: {e}")
@@ -125,7 +129,14 @@ def get_current_context(mode="auto"):
 
         logging.warning(f"⚠️ Keine passende Information für Modus '{mode}' gefunden.")
         return None, None
-
+    except SpotifyException as e:
+        if e.http_status == 429:
+            retry_after = int(e.headers.get("Retry-After", 5))
+            logging.warning(f"⚠️ Rate Limit! Warte {retry_after} Sekunden...")
+            time.sleep(retry_after)
+        else:            
+            logging.error(f"❌ Fehler beim Lesen des Spotify-Kontexts: {e}")
+            return None, None
     except Exception as e:
         logging.error(f"❌ Fehler beim Lesen des Spotify-Kontexts: {e}")
         return None, None

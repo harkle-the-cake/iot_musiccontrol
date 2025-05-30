@@ -18,6 +18,7 @@ from dotenv import load_dotenv
 from libs import LCD_1inch3
 import requests
 import threading
+from spotipy.exceptions import SpotifyException
 
 # vars
 code_patch = ""
@@ -307,9 +308,18 @@ def process_spotify_update():
             logging.warning(f"❓ Unbekannter Modus: {mode}")
             show_local_fallback("mode_unknown.jpg")
 
+    except SpotifyException as e:
+        if e.http_status == 429:
+            retry_after = int(e.headers.get("Retry-After", 5))
+            logging.warning(f"⚠️ Rate Limit! Warte {retry_after} Sekunden...")
+            show_local_fallback("ratelimit.jpg")
+            time.sleep(retry_after)
+        else:
+            logging.error(f"❌ Fehler in process_once(): {e}")
+            show_local_fallback("error.jpg")
     except Exception as e:
         logging.error(f"❌ Fehler in process_once(): {e}")
-        show_local_fallback("error.jpg")   
+        show_local_fallback("error.jpg")
 
 def process_once():
     status = get_current_status()
@@ -345,7 +355,10 @@ sp = spotipy.Spotify(auth_manager=SpotifyOAuth(
     redirect_uri=config.get("redirect_uri"),
     scope="user-read-playback-state user-modify-playback-state user-read-private user-read-email",
     cache_path=Path(__file__).resolve().parent / ".spotify_cache",
-    open_browser=False
+    open_browser=False,
+    requests_timeout=10,
+    retries=3,                 # wichtig!
+    status_forcelist=[429, 500, 502, 503, 504]
 ))
 
 start_cleanup_thread(interval_hours=6, days_old=90)
