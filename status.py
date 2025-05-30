@@ -19,6 +19,7 @@ logging.basicConfig(
     format="%(asctime)s [%(levelname)s] %(message)s",
 )
 
+logging.getLogger('werkzeug').setLevel(logging.WARNING)
 logging.getLogger("requests").setLevel(logging.ERROR)
 logging.getLogger("requests").propagate = True
 logging.getLogger("urllib3").setLevel(logging.ERROR)
