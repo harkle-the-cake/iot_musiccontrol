@@ -40,6 +40,7 @@ logging.basicConfig(
 )
 
 logging.getLogger("requests").setLevel(logging.ERROR)
+logging.getLogger("requests").propagate = True
 logging.getLogger("urllib3").setLevel(logging.ERROR)
 # Disable all child loggers of urllib3, e.g. urllib3.connectionpool
 logging.getLogger("urllib3").propagate = True
@@ -63,10 +64,10 @@ def mapToImage(device):
     default_path = images_dir / "default.jpg"
 
     if specific_path.exists():
-        logging.info(f"🔗 Found image for device ID: {device_id}")
+        logging.debug(f"🔗 Found image for device ID: {device_id}")
         return specific_path
     elif fallback_path.exists():
-        logging.info(f"🔗 Found image for device name: {device_name}")
+        logging.debug(f"🔗 Found image for device name: {device_name}")
         return fallback_path
     else:
         logging.warning("🖼 No image found, using default.")
@@ -181,7 +182,7 @@ def show_local_fallback(image_name):
     fallback_path = Path(__file__).resolve().parent / "static/images" / image_name
     if fallback_path.exists():
         show_device(fallback_path)
-        logging.info(f"🖼 Fallback-Bild angezeigt: {image_name}")
+        logging.debug(f"🖼 Fallback-Bild angezeigt: {image_name}")
     else:
         logging.warning(f"❌ Kein Fallback-Bild gefunden: {image_name}")
 
@@ -201,7 +202,7 @@ def show_artist_image(playback, artistId, fallback_mode="default"):
         track = playback.get("item")
         if track:
             artist_name = track["artists"][0]["name"]
-            logging.info(f"🔍 Artist-Fallback-Suche für '{artist_name}'")
+            logging.debug(f"🔍 Artist-Fallback-Suche für '{artist_name}'")
             search_result = sp.search(q=artist_name, type="artist", limit=1)
             artists = search_result.get("artists", {}).get("items", [])
             if artists:
