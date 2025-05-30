@@ -350,21 +350,26 @@ disp.clear()
 
 config = load_config()
 
-auth_manager = SpotifyOAuth(
-    client_id=config.get("client_id"),
-    client_secret=config.get("client_secret"),
-    redirect_uri=config.get("redirect_uri"),
-    scope="user-read-playback-state user-modify-playback-state user-read-private user-read-email",
-    cache_path=Path(__file__).resolve().parent / ".spotify_cache",
-    open_browser=False
-)
+# Spotify auth
+try:
+    auth_manager = SpotifyOAuth(
+        client_id=config.get("client_id"),
+        client_secret=config.get("client_secret"),
+        redirect_uri=config.get("redirect_uri"),
+        scope="user-read-playback-state user-modify-playback-state user-read-private user-read-email",
+        cache_path=Path(__file__).resolve().parent / ".spotify_cache",
+        open_browser=False
+    )
 
-sp = Spotify(
-    auth_manager=auth_manager,
-    requests_timeout=10,
-    retries=3,
-    status_forcelist=[429, 500, 502, 503, 504]
-)
+    sp = spotipy.Spotify(
+        auth_manager=auth_manager,
+        requests_timeout=10,
+        retries=3,
+        status_forcelist=[429, 500, 502, 503, 504]
+    )
+except Exception as e:
+    logging.error(f"❌ Spotify Auth fehlgeschlagen: {e}")
+    exit(1)
 
 start_cleanup_thread(interval_hours=6, days_old=90)
 

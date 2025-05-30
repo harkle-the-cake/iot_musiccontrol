@@ -46,12 +46,12 @@ try:
         open_browser=False
         )
 
-    sp = Spotify(
+    sp = spotipy.Spotify(
         auth_manager=auth_manager,
         requests_timeout=10,
         retries=3,
         status_forcelist=[429, 500, 502, 503, 504]
-    )
+    )    
 except Exception as e:
     logging.error(f"❌ Spotify Auth fehlgeschlagen: {e}")
     exit(1)
