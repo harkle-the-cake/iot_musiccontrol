@@ -11,6 +11,19 @@ lock = Lock()
 reset_timer = None
 RESET_DELAY = 3  # Sekunden
 
+# Logging
+# Set up logging
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(message)s",
+)
+
+logging.getLogger("requests").setLevel(logging.ERROR)
+logging.getLogger("requests").propagate = True
+logging.getLogger("urllib3").setLevel(logging.ERROR)
+# Disable all child loggers of urllib3, e.g. urllib3.connectionpool
+logging.getLogger("urllib3").propagate = True
+
 def reset_status():
     global status
     with lock:
