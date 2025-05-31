@@ -218,7 +218,7 @@ def show_artist_image(playback, artistId, fallback_mode="default"):
             time.sleep(retry_after)
         else:            
             logging.error(f"❌ Fehler beim Lesen des Spotify-Kontexts: {e}")
-            return None, None                
+            return False             
     except Exception as e:
         logging.warning(f"⚠️ Fehler bei Artist-Suche: {e}")
 
@@ -342,8 +342,8 @@ def process_once():
     
     if time.time() - last_spotify_call > 4:
         logging.debug(f"processing spotify update...")
-        last_spotify_call = time.time()
         process_spotify_update()
+        last_spotify_call = time.time()
     else:
         logging.debug(f"waiting for next processing time...")
 
