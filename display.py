@@ -10,6 +10,7 @@ import io
 import json
 import spotipy
 from spotipy.oauth2 import SpotifyOAuth
+from spotipy.oauth2 import SpotifyClientCredentials
 from PIL import Image
 import spidev as SPI
 from pathlib import Path
@@ -39,9 +40,9 @@ logging.basicConfig(
     format="%(asctime)s [%(levelname)s] %(message)s",
 )
 
-logging.getLogger("requests").setLevel(logging.ERROR)
+logging.getLogger("requests").setLevel(logging.WARNING)
 logging.getLogger("requests").propagate = True
-logging.getLogger("urllib3").setLevel(logging.ERROR)
+logging.getLogger("urllib3").setLevel(logging.WARNING)
 # Disable all child loggers of urllib3, e.g. urllib3.connectionpool
 logging.getLogger("urllib3").propagate = True
 
@@ -353,7 +354,7 @@ config = load_config()
 
 # Spotify auth
 try:
-    auth_manager = SpotifyOAuth(
+    auth_manager_old = SpotifyOAuth(
         client_id=config.get("client_id"),
         client_secret=config.get("client_secret"),
         redirect_uri=config.get("redirect_uri"),
@@ -361,12 +362,17 @@ try:
         cache_path=Path(__file__).resolve().parent / ".spotify_cache",
         open_browser=False
     )
+    
+    auth_manager = SpotifyClientCredentials(
+        client_id=config.get("client_id"),
+        client_secret=config.get("client_secret")
+    )
 
     sp = spotipy.Spotify(
         auth_manager=auth_manager,
         requests_timeout=10,
         retries=3,
-        status_forcelist=[429, 500, 502, 503, 504]
+        status_forcelist=[500, 502, 503, 504]
     )
 except Exception as e:
     logging.error(f"❌ Spotify Auth fehlgeschlagen: {e}")

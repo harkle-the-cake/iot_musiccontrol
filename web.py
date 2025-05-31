@@ -22,6 +22,18 @@ app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = IMAGE_DIR
 app.config['MAX_CONTENT_LENGTH'] = 5 * 1024 * 1024  # max 5MB
 
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(message)s",
+)
+
+logging.getLogger('werkzeug').setLevel(logging.WARNING)
+logging.getLogger("requests").setLevel(logging.WARNING)
+logging.getLogger("requests").propagate = True
+logging.getLogger("urllib3").setLevel(logging.WARNING)
+# Disable all child loggers of urllib3, e.g. urllib3.connectionpool
+logging.getLogger("urllib3").propagate = True
+
 # Konfiguration laden
 def load_config():
     if CONFIG_PATH.exists():
