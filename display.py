@@ -211,6 +211,14 @@ def show_artist_image(playback, artistId, fallback_mode="default"):
                 if images:
                     show_image_from_url(images[0]["url"])
                     return True
+    except SpotifyException as e:
+        if e.http_status == 429:
+            retry_after = int(e.headers.get("Retry-After", 5))
+            logging.warning(f"⚠️ Rate Limit! Warte {retry_after} Sekunden...")
+            time.sleep(retry_after)
+        else:            
+            logging.error(f"❌ Fehler beim Lesen des Spotify-Kontexts: {e}")
+            return None, None                
     except Exception as e:
         logging.warning(f"⚠️ Fehler bei Artist-Suche: {e}")
 
