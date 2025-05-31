@@ -6,6 +6,7 @@ from spotipy import Spotify
 from spotipy.oauth2 import SpotifyOAuth
 from PIL import Image
 from pathlib import Path
+import logging
 import os
 import json
 import json
