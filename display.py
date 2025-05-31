@@ -24,6 +24,7 @@ from spotipy.exceptions import SpotifyException
 # vars
 code_patch = ""
 last_track_id = None
+last_spotify_call = 0
 
 # GPIO pin configuration
 RST = 27
@@ -332,15 +333,14 @@ def process_spotify_update():
         show_local_fallback("error.jpg")
 
 def process_once():
+    global last_spotify_call
     status = get_current_status()
-    
-    last_spotify_call = 0
-    
+        
     while (status != "playing"):
         show_local_fallback(f"{status}.jpg")
         status = get_current_status()
     
-    if time.time() - last_spotify_call > 4:
+    if time.time() - last_spotify_call > 5:
         logging.debug(f"processing spotify update...")
         process_spotify_update()
         last_spotify_call = time.time()
