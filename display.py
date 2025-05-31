@@ -191,14 +191,28 @@ def show_local_fallback(image_name):
 
 def show_artist_image(playback, artistId, fallback_mode="default"):
     global rateLimitHitTime
+        
+    # Cache-Verzeichnis
+    cache_dir = Path(__file__).resolve().parent / "cache"
+    cache_dir.mkdir(parents=True, exist_ok=True)
+
+    # Cache-Dateiname
+    cache_path = cache_dir / f"a_{artistId}.jpg"
+
+    # Lade aus Cache oder von URL
+    if cache_path.exists():
+        logging.debug(f"🖼 Lade Artist-Bild aus Cache: {cache_path}")
+        image = Image.open(cache_path)
+        return True
     
+    # no cache image
     if (time.time()>rateLimitHitTime):
         try:
             artist_id = artistId
             artist = sp.artist(artist_id)
             images = artist.get("images", [])
             if images:
-                show_image_from_url(images[0]["url"])
+                show_image_from_url(images[0]["url"], f"a_{artistId}")
                 return True
         except SpotifyException as e:
             if e.http_status == 429:
