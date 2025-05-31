@@ -354,7 +354,7 @@ config = load_config()
 
 # Spotify auth
 try:
-    auth_manager_old = SpotifyOAuth(
+    auth_manager = SpotifyOAuth(
         client_id=config.get("client_id"),
         client_secret=config.get("client_secret"),
         redirect_uri=config.get("redirect_uri"),
@@ -363,7 +363,7 @@ try:
         open_browser=False
     )
     
-    auth_manager = SpotifyClientCredentials(
+    auth_manager_cc = SpotifyClientCredentials(
         client_id=config.get("client_id"),
         client_secret=config.get("client_secret")
     )
