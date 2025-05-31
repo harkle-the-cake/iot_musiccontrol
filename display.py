@@ -25,6 +25,7 @@ from spotipy.exceptions import SpotifyException
 code_patch = ""
 last_track_id = None
 last_spotify_call = 0
+rateLimitHitTime = 0
 
 # GPIO pin configuration
 RST = 27
@@ -189,15 +190,27 @@ def show_local_fallback(image_name):
         logging.warning(f"❌ Kein Fallback-Bild gefunden: {image_name}")
 
 def show_artist_image(playback, artistId, fallback_mode="default"):
-    try:
-        artist_id = artistId
-        artist = sp.artist(artist_id)
-        images = artist.get("images", [])
-        if images:
-            show_image_from_url(images[0]["url"])
-            return True
-    except Exception as e:
-        logging.warning(f"⚠️ Fehler beim direkten Artist-Zugriff: {e}")
+    global rateLimitHitTime
+    
+    if (time.time()>rateLimitHitTime):
+        try:
+            artist_id = artistId
+            artist = sp.artist(artist_id)
+            images = artist.get("images", [])
+            if images:
+                show_image_from_url(images[0]["url"])
+                return True
+        except SpotifyException as e:
+            if e.http_status == 429:
+                retry_after = int(e.headers.get("Retry-After", 5))
+                logging.warning(f"⚠️ Rate Limit! Warte {retry_after} Sekunden...")
+                rateLimitHitTime = time.time() + retry_after
+            else:            
+                logging.error(f"❌ Fehler beim Abrufen der Musiker-Daten: {e}")        
+        except Exception as e:
+            logging.warning(f"⚠️ Fehler beim direkten Artist-Zugriff: {e}")
+    else:
+        logging.debug(f"Rate limit Zeit ist: {rateLimitHitTime} noch nicht erreicht.")
     
     # Fallback-Suche via aktuellem Track
     try:
@@ -345,7 +358,7 @@ def process_once():
         process_spotify_update()
         last_spotify_call = time.time()
     else:
-        logging.debug(f"waiting for next processing time...")
+        logging.trace(f"waiting for next processing time...")
 
 # Initialize display
 disp = LCD_1inch3.LCD_1inch3(
