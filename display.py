@@ -358,7 +358,7 @@ def process_once():
         process_spotify_update()
         last_spotify_call = time.time()
     else:
-        logging.trace(f"waiting for next processing time...")
+        logging.debug(f"waiting for next processing time...")
 
 # Initialize display
 disp = LCD_1inch3.LCD_1inch3(
