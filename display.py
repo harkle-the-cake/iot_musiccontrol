@@ -371,7 +371,7 @@ try:
     sp = spotipy.Spotify(
         auth_manager=auth_manager,
         requests_timeout=10,
-        retries=3,
+        retries=0,
         status_forcelist=[500, 502, 503, 504]
     )
 except Exception as e:
