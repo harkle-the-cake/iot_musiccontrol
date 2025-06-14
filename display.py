@@ -35,6 +35,10 @@ BL = 18
 bus = 0
 device = 0
 
+GPIO.setmode(GPIO.BCM)
+GPIO.setup(BL, GPIO.OUT)
+GPIO.output(BL, GPIO.HIGH)  # Start: on
+
 cache_path = Path(__file__).resolve().parent / ".spotify_cache"
 
 # Set up logging
