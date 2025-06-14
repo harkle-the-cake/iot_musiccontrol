@@ -55,6 +55,9 @@ def get_current_status():
     except:
         return "playing"
 
+def set_backlight(state: bool):
+    GPIO.output(BL, GPIO.HIGH if state else GPIO.LOW)
+
 def mapToImage(device):
     """Return local image path for a given Spotify device dict."""
     device_id = device.get('id')
@@ -268,11 +271,13 @@ def process_spotify_update():
     try:
         playback = sp.current_playback()
         if not playback:
-            logging.warning("⏸ No playback available.")
+            logging.debug("⏸ No playback available.")
             show_local_fallback("no_image.jpg")
+            set_backlight(False)
             return
-
-
+        
+        set_backlight(True)
+            
         if mode == "delete":
             show_local_fallback("delete.jpg")
             return
@@ -353,27 +358,31 @@ def process_spotify_update():
             show_local_fallback("ratelimit.jpg")
             time.sleep(retry_after)
         else:
-            logging.error(f"❌ Fehler in process_once(): {e}")
+            logging.error(f"❌ Fehler in process_spotify_update(): {e}")
             show_local_fallback("error.jpg")
     except Exception as e:
-        logging.error(f"❌ Fehler in process_once(): {e}")
+        logging.error(f"❌ Fehler in process_spotify_update(): {e}")
         show_local_fallback("error.jpg")
 
 def process_once():
-    global last_spotify_call
-    status = get_current_status()
-        
-    while (status != "playing"):
-        show_local_fallback(f"{status}.jpg")
+    try:
+        global last_spotify_call
         status = get_current_status()
-    
-    if time.time() - last_spotify_call > 5:
-        logging.debug(f"processing spotify update...")
-        process_spotify_update()
-        last_spotify_call = time.time()
-    else:
-        logging.debug(f"waiting for next processing time...")
-
+            
+        while (status != "playing"):
+            show_local_fallback(f"{status}.jpg")
+            status = get_current_status()
+        
+        if time.time() - last_spotify_call > 5:
+            logging.debug(f"processing spotify update...")
+            process_spotify_update()
+            last_spotify_call = time.time()
+        else:
+            logging.debug(f"waiting for next processing time...")
+    except Exception as e:
+        logging.error(f"❌ Fehler in process_once(): {e}")
+        show_local_fallback("error.jpg")
+        
 # Initialize display
 disp = LCD_1inch3.LCD_1inch3(
     spi=SPI.SpiDev(bus, device),
