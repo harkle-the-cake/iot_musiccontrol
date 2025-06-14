@@ -311,7 +311,7 @@ def process_spotify_update():
             item = playback.get("item")
             
             if not item:
-                logging.warning("⏸ playback item available.")
+                logging.warning("⏸ playback item unavailable.")
                 show_local_fallback("no_image.jpg")
                 return
                     
