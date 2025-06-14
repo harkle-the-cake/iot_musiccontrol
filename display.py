@@ -20,6 +20,7 @@ from libs import LCD_1inch3
 import requests
 import threading
 import RPi.GPIO as GPIO
+
 from spotipy.exceptions import SpotifyException
 
 # vars
@@ -34,7 +35,8 @@ DC = 25
 BL = 18
 bus = 0
 device = 0
-
+# set GPIO to control backlight BL
+GPIO.setwarnings(False)
 GPIO.setmode(GPIO.BCM)
 GPIO.setup(BL, GPIO.OUT)
 GPIO.output(BL, GPIO.HIGH)  # Start: on
