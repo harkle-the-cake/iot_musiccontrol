@@ -279,7 +279,7 @@ def process_spotify_update():
         playback = sp.current_playback()
         if not playback:
             logging.debug("⏸ No playback available.")
-            show_local_fallback("no_image.jpg")
+            show_local_fallback("sleep.jpg")
             set_backlight(False)
             return
         else:
