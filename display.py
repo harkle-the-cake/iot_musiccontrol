@@ -280,8 +280,8 @@ def process_spotify_update():
             show_local_fallback("no_image.jpg")
             set_backlight(False)
             return
-        
-        set_backlight(True)
+        else:
+            set_backlight(True)
             
         if mode == "delete":
             show_local_fallback("delete.jpg")
