@@ -19,6 +19,7 @@ from dotenv import load_dotenv
 from libs import LCD_1inch3
 import requests
 import threading
+import RPi.GPIO as GPIO
 from spotipy.exceptions import SpotifyException
 
 # vars
