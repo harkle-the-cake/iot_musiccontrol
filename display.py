@@ -253,7 +253,7 @@ def show_artist_image(playback, artistId, fallback_mode="default"):
         if e.http_status == 429:
             retry_after = int(e.headers.get("Retry-After", 5))
             logging.warning(f"⚠️ Rate Limit! Warte {retry_after} Sekunden...")
-            time.sleep(retry_after)
+            #time.sleep(retry_after)
         else:            
             logging.error(f"❌ Fehler beim Lesen des Spotify-Kontexts: {e}")
             return False             
